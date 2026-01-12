@@ -1,4 +1,4 @@
-import { DBService } from 'src/DB/db.service';
+import { DBService } from '../../db.service';
 import { TUser, User } from './user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
