@@ -1,4 +1,6 @@
 import * as dotenv from 'dotenv';
+import 'module-alias/register';
+
 
 dotenv.config();
 import { NestFactory } from '@nestjs/core';
