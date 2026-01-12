@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from "@nestjs/common";
-import { Auth } from "src/Common";
+import { Auth } from "../../Common";
 import { ProjectService } from "./project.service";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { CreateProjectDto, UpdateEquipmentCostsDto, UpdateLaborCostsDto, UpdateProjectDto } from "./dto";

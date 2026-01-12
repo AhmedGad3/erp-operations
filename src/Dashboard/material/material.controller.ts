@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } fr
 import { MaterialService } from "./material.service";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { CreateMaterialDto } from "./dto";
-import { Auth } from "src/Common";
+import { Auth } from "../../Common";
 import { UpdateMaterialDto } from "./dto/update-material.dto";
 
 

@@ -6,7 +6,7 @@ import {
     Post,
     Req,
 } from '@nestjs/common';
-import { Auth } from 'src/Common';
+import { Auth } from '../../../../Common';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { CreateClientPaymentDto } from './dto/create-client-payment.dto';
 import { ClientPaymentService } from './client.payment.service';

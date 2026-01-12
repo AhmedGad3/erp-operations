@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { Types } from "mongoose";
-import { SupplierRepository } from "src/DB/Models/Supplier/supplier.repository";
-import { TUser } from "src/DB";
+import { SupplierRepository } from "../../DB/Models/Supplier/supplier.repository";
+import { TUser } from "../../DB";
 import { CreateSupplierDto, UpdateSupplierDto } from "./dto";
 import { I18nService, I18nContext } from "nestjs-i18n";
 

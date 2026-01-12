@@ -4,7 +4,7 @@ import { Model, Types } from "mongoose";
 import {
     SupplierTransaction,
     SupplierTransactionDocument,
-} from "src/DB/Models/Transaction/supplier/supplier-transaction.schema";
+} from "../../../../DB/Models/Transaction/supplier/supplier-transaction.schema";
 import { CounterService } from "../../common/counter.service";
 
 @Injectable()

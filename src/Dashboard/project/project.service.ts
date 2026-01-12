@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { I18nContext, I18nService } from "nestjs-i18n";
-import { ClientRepository } from "src/DB/Models/Client/client.repository";
-import { ProjectRepository } from "src/DB/Models/Project/project.repository";
+import { ClientRepository } from "../../DB/Models/Client/client.repository";
+import { ProjectRepository } from "../../DB/Models/Project/project.repository";
 import { CreateProjectDto, UpdateEquipmentCostsDto, UpdateLaborCostsDto, UpdateProjectDto } from "./dto";
-import { TUser } from "src/DB";
+import { TUser } from "../../DB";
 import { Model, Types } from "mongoose";
-import { Project, ProjectStatus, TProject } from "src/DB/Models/Project/project.schema";
+import { Project, ProjectStatus, TProject } from "../../DB/Models/Project/project.schema";
 import { InjectModel } from "@nestjs/mongoose";
 
 

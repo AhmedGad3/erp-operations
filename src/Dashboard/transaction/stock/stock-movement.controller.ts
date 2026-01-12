@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Req } from "@nestjs/common";
 import { I18nContext, I18nService } from "nestjs-i18n";
-import { Auth } from "src/Common";
+import { Auth } from "../../../Common";
 import { StockMovementService } from "./stock-movement.service";
 import { CreateAdjustmentDto } from "./dto/create-adjustment.dto";
 

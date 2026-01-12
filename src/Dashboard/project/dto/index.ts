@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
-import { ProjectStatus } from 'src/DB/Models/Project/project.schema';
+import { ProjectStatus } from '../../../DB/Models/Project/project.schema';
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 
 class LaborDetailsDto {

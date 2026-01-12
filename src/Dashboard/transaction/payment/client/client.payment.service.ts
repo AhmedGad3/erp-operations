@@ -8,10 +8,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { Project, TProject } from 'src/DB/Models/Project/project.schema';
-import { TUser } from 'src/DB';
+import { Project, TProject } from '../../../../DB/Models/Project/project.schema';
+import { TUser } from '../../../../DB';
 import { CreateClientPaymentDto } from './dto/create-client-payment.dto';
-import { ClientsPayment, ClientsPaymentDocument } from 'src/DB/Models/Transaction/client/client.payment.schema';
+import { ClientsPayment, ClientsPaymentDocument } from '../../../../DB/Models/Transaction/client/client.payment.schema';
 import { ClientLedgerService } from '../../ledger/Client/client-ledger.service';
 import { CounterService } from '../../common/counter.service';
 

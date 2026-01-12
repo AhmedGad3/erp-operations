@@ -6,11 +6,11 @@ import {
   
 } from '@nestjs/common';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { ClientRepository } from 'src/DB/Models/Client/client.repository';
+import { ClientRepository } from '../../DB/Models/Client/client.repository';
 import { CreateClientDto, UpdateClientDto } from './dto';
-import { TUser } from 'src/DB';
+import { TUser } from '../../DB';
 import { Types } from 'mongoose';
-import { TClient } from 'src/DB/Models/Client/client.schema';
+import { TClient } from '../../DB/Models/Client/client.schema';
 
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ClientType } from 'src/Common/Enums';
+import { ClientType } from '../../../Common/Enums';
 
 export class CreateClientDto {
   @IsString()

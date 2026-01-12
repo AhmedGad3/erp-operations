@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { I18nContext, I18nService } from "nestjs-i18n";
-import { TUser, UnitRepository } from "src/DB";
-import { MaterialRepository } from "src/DB/Models/Material/material.repository";
+import { TUser, UnitRepository } from "../../DB";
+import { MaterialRepository } from "../../DB/Models/Material/material.repository";
 import { CreateMaterialDto } from "./dto";
-import { TMaterial } from "src/DB/Models/Material/material.schema";
+import { TMaterial } from "../../DB/Models/Material/material.schema";
 import { Types } from "mongoose";
-import { MainCategory } from "src/Common/Enums";
+import { MainCategory } from "../../Common/Enums";
 import { UpdateMaterialDto } from "./dto/update-material.dto";
 
 

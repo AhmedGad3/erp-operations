@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
-import { Auth } from "src/Common";
+import { Auth } from "../../../../Common";
 import { I18nService, I18nContext } from "nestjs-i18n";
 import { CreatePaymentDto } from "./dto/create-supplier-payment.dto";
 import { CreateSupplierRefundDto } from "./dto/create-supplier-refund.dto";

@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 
-import { Supplier } from 'src/DB/Models/Supplier/supplier.schema';
-import { SupplierTransaction } from 'src/DB/Models/Transaction/supplier/supplier-transaction.schema';
+import { Supplier } from '../../../DB/Models/Supplier/supplier.schema';
+import { SupplierTransaction } from '../../../DB/Models/Transaction/supplier/supplier-transaction.schema';
 import { SupplierStatementDto } from './dto';
 
 @Injectable()

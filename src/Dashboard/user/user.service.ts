@@ -7,7 +7,7 @@ import {
   import {  hash, sendEmail, TokenService } from '../../Common';
   import { TUser, UserRepository } from '../../DB';
   import { CreateUserpDto } from './dto/index';
-  import { otpRepository } from 'src/DB/Models/Otp/otp.repository';
+  import { otpRepository } from '../../DB/Models/Otp/otp.repository';
   
   @Injectable()
   export class UserService {

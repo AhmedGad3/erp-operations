@@ -10,7 +10,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { Auth } from 'src/Common';
+import { Auth } from '../../Common';
 import { CreateClientDto, UpdateClientDto } from './dto';
 import { ClientService } from './client.service';
 import { I18nContext, I18nService } from 'nestjs-i18n';

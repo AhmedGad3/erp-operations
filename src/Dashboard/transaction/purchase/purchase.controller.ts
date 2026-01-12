@@ -1,10 +1,10 @@
 import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
-import { Auth } from "src/Common";
+import { Auth } from "../../../Common";
 import { I18nService, I18nContext } from "nestjs-i18n";
 import { PurchaseService } from "./purchase.service";
 import { CreatePurchaseDto } from "./dto/create-purchase.dto";
 import { CreatePurchaseReturnDto } from "./dto/create-purchase-return.dto";
-import { TUser } from "src/DB";
+import { TUser } from "../../../DB";
 
 @Auth('admin')
 @Controller('/admin/purchases')

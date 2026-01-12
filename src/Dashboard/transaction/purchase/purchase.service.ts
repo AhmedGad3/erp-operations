@@ -5,15 +5,15 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { PurchaseInvoice, PurchaseInvoiceStatus } from 'src/DB/Models/Transaction/supplier/purchase-invoice.schema';
+import { PurchaseInvoice, PurchaseInvoiceStatus } from '../../../DB/Models/Transaction/supplier/purchase-invoice.schema';
 import { SupplierLedgerService } from '../ledger/Supplier/supplier-ledger.service';
 import { CounterService } from '../common/counter.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { StockMovementType } from 'src/DB/Models/Transaction/stock-movement.schema';
-import { TUser, MaterialRepository } from 'src/DB';
+import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
+import { TUser, MaterialRepository } from '../../../DB';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { CreatePurchaseReturnDto } from './dto/create-purchase-return.dto';
-import { PurchaseReturn, PurchaseReturnDocument } from 'src/DB/Models/Transaction/supplier/purchase-return.schema';
+import { PurchaseReturn, PurchaseReturnDocument } from '../../../DB/Models/Transaction/supplier/purchase-return.schema';
 import { StockMovementService } from '../stock/stock-movement.service';
 
 @Injectable()

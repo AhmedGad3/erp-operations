@@ -5,7 +5,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { CommonModule } from "../../common/common.module";
 import { ClientLedgerController } from "./client-ledger.controller";
 import { ClientLedgerService } from "./client-ledger.service"; 
-import { ClientTransaction, ClientTransactionSchema } from "src/DB/Models/Transaction/client/client-transaction.schema";
+import { ClientTransaction, ClientTransactionSchema } from "../../../../DB/Models/Transaction/client/client-transaction.schema";
 
 @Module({
     imports: [

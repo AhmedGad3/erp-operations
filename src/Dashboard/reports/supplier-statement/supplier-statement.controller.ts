@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
-import { Auth } from 'src/Common';
+import { Auth } from '../../../Common';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { SupplierStatementService } from './supplier-statement.service';
 import { SupplierStatementDto } from './dto';

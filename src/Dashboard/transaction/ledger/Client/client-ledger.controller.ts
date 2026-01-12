@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { Auth } from 'src/Common';
+import { Auth } from '../../../../Common';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Types } from 'mongoose';
 import { ClientLedgerService } from './client-ledger.service';

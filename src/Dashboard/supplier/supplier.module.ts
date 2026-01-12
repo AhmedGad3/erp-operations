@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
-import { Supplier, SupplierRepository, SupplierSchema } from "src/DB";
-import { SupplierTransaction, SupplierTransactionSchema } from "src/DB/Models/Transaction/supplier/supplier-transaction.schema";
+import { Supplier, SupplierRepository, SupplierSchema } from "../../DB";
+import { SupplierTransaction, SupplierTransactionSchema } from "../../DB/Models/Transaction/supplier/supplier-transaction.schema";
 import { SupplierService } from "./supplier.service";
 import { SupplierController } from "./supplier.controller";
 

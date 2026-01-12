@@ -7,7 +7,7 @@ import { Model, Types } from 'mongoose';
 import {
   ClientTransaction,
   ClientTransactionDocument,
-} from 'src/DB/Models/Transaction/client/client-transaction.schema';
+} from '../../../../DB/Models/Transaction/client/client-transaction.schema';
 import { CounterService } from '../../common/counter.service';
 
  export interface BreakdownItem {

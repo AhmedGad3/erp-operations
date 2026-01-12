@@ -12,10 +12,10 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { Auth } from 'src/Common';
+import { Auth } from '../../Common';
 import { UnitService } from './unit.service';
 import { ConvertUnitDto, CreateUnitDto, UpdateUnitDto } from './dto';
-import { UnitCategory } from 'src/Common/Enums';
+import { UnitCategory } from '../../Common/Enums';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 
 @Auth('admin')

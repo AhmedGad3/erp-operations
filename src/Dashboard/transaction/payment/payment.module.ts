@@ -5,24 +5,24 @@ import { CommonModule } from '../common/common.module';
 import {
   SupplierPayment,
   SupplierPaymentSchema,
-} from 'src/DB/Models/Transaction/supplier/payment.schema';
+} from '../../../DB/Models/Transaction/supplier/payment.schema';
 
 import {
   SupplierRefund,
   SupplierRefundSchema,
-} from 'src/DB/Models/Transaction/supplier/supplier-refund.schema';
+} from '../../../DB/Models/Transaction/supplier/supplier-refund.schema';
 
 import {
   PurchaseInvoice,
   PurchaseInvoiceSchema,
-} from 'src/DB/Models/Transaction/supplier/purchase-invoice.schema';
+} from '../../../DB/Models/Transaction/supplier/purchase-invoice.schema';
 
 import {
   ClientsPayment,
   ClientsPaymentSchema,
-} from 'src/DB/Models/Transaction/client/client.payment.schema';
+} from '../../../DB/Models/Transaction/client/client.payment.schema';
 
-import { Project, ProjectSchema } from 'src/DB/Models/Project/project.schema';
+import { Project, ProjectSchema } from '../../../DB/Models/Project/project.schema';
 
 import { SupplierLedgerModule } from '../ledger/Supplier/supplier-ledger.module';
 import { ClientLedgerModule } from '../ledger/Client/client-ledger.module';

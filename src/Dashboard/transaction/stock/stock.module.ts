@@ -6,7 +6,7 @@ import {
 } from 'src/DB/Models/Transaction/stock-movement.schema';
 import { StockMovementService } from './stock-movement.service';
 import { CommonModule } from '../common/common.module';
-import { Material, MaterialRepository, MaterialSchema } from 'src/DB';
+import { Material, MaterialRepository, MaterialSchema } from '../../../DB';
 import { StockMovementController } from './stock-movement.controller';
 
 @Module({

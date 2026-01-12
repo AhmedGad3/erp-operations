@@ -6,11 +6,11 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { MaterialIssue, MaterialIssueDocument } from 'src/DB/Models/Transaction/project/material-issue.schema';
-import { ProjectInvoice, ProjectInvoiceDocument, ProjectInvoiceStatus } from 'src/DB/Models/Transaction/project/project-invoice.schema';
-import { Project, TProject } from 'src/DB/Models/Project/project.schema';
-import { StockMovementType } from 'src/DB/Models/Transaction/stock-movement.schema';
-import { MaterialRepository, TUser } from 'src/DB';
+import { MaterialIssue, MaterialIssueDocument } from '../../../DB/Models/Transaction/project/material-issue.schema';
+import { ProjectInvoice, ProjectInvoiceDocument, ProjectInvoiceStatus } from '../../../DB/Models/Transaction/project/project-invoice.schema';
+import { Project, TProject } from '../../../DB/Models/Project/project.schema';
+import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
+import { MaterialRepository, TUser } from '../../../DB';
 import { CreateMaterialIssueDto } from './dto/create-material-issue.dto';
 import { StockMovementService } from '../stock/stock-movement.service';
 import { ClientLedgerService } from '../ledger/Client/client-ledger.service';

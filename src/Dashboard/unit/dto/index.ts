@@ -1,7 +1,7 @@
 import { OmitType, PartialType } from "@nestjs/mapped-types";
 import { Transform } from "class-transformer";
 import { IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateIf } from "class-validator";
-import { UnitCategory } from "src/Common/Enums";
+import { UnitCategory } from "../../../Common/Enums";
 
 
 

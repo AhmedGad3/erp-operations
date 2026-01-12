@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from "@nestjs/common";
 import { SupplierService } from "./supplier.service";
 import { I18nService, I18nContext } from "nestjs-i18n";
-import { Auth } from "src/Common";
+import { Auth } from "../../Common";
 import { CreateSupplierDto, UpdateSupplierDto } from "./dto";
 
 @Auth('admin')

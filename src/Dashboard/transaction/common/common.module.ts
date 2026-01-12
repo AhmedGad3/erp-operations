@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
-import { Counter, CounterSchema } from "src/DB/Models/Counter/counter.schema";
-import { SupplierTransaction, SupplierTransactionSchema } from "src/DB/Models/Transaction/supplier/supplier-transaction.schema";
+import { Counter, CounterSchema } from "../../../DB/Models/Counter/counter.schema";
+import { SupplierTransaction, SupplierTransactionSchema } from "../../../DB/Models/Transaction/supplier/supplier-transaction.schema";
 import { CounterService } from "./counter.service";
 import { SupplierLedgerService } from "../ledger/Supplier/supplier-ledger.service";
 import { ClientLedgerService } from './../ledger/Client/client-ledger.service';
-import { ClientTransaction, ClientTransactionSchema } from "src/DB/Models/Transaction/client/client-transaction.schema";
+import { ClientTransaction, ClientTransactionSchema } from "../../../DB/Models/Transaction/client/client-transaction.schema";
 
 @Module({
     imports: [

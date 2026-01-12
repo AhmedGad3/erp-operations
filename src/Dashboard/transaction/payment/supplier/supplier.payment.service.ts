@@ -3,14 +3,14 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { SupplierPayment } from "src/DB/Models/Transaction/supplier/payment.schema";
-import { PurchaseInvoice, PurchaseInvoiceStatus } from "src/DB/Models/Transaction/supplier/purchase-invoice.schema";
-import { SupplierRefund } from "src/DB/Models/Transaction/supplier/supplier-refund.schema";
+import { SupplierPayment } from "../../../../DB/Models/Transaction/supplier/payment.schema";
+import { PurchaseInvoice, PurchaseInvoiceStatus } from "../../../../DB/Models/Transaction/supplier/purchase-invoice.schema";
+import { SupplierRefund } from "../../../../DB/Models/Transaction/supplier/supplier-refund.schema";
 import { SupplierLedgerService } from "../../ledger/Supplier/supplier-ledger.service";
 import { CounterService } from "../../common/counter.service";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { CreatePaymentDto } from "./dto/create-supplier-payment.dto";
-import { TUser } from "src/DB";
+import { TUser } from "../../../../DB";
 import { CreateSupplierRefundDto } from "./dto/create-supplier-refund.dto";
 
 @Injectable()

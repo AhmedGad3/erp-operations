@@ -2,9 +2,9 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { StockMovement, StockMovementDocument, StockMovementType } from "src/DB/Models/Transaction/stock-movement.schema";
+import { StockMovement, StockMovementDocument, StockMovementType } from "../../../DB/Models/Transaction/stock-movement.schema";
 import { CounterService } from "../common/counter.service";
-import { MaterialRepository } from "src/DB";
+import { MaterialRepository } from "../../../DB";
 
 @Injectable()
 export class StockMovementService {

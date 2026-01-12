@@ -5,16 +5,16 @@ import { PurchaseService } from "./purchase.service";
 import {
     PurchaseInvoice,
     PurchaseInvoiceSchema,
-} from "src/DB/Models/Transaction/supplier/purchase-invoice.schema";
+} from "../../../DB/Models/Transaction/supplier/purchase-invoice.schema";
 import {
     PurchaseReturn,
     PurchaseReturnSchema,
-} from "src/DB/Models/Transaction/supplier/purchase-return.schema";
+} from "../../../DB/Models/Transaction/supplier/purchase-return.schema";
 
 // ✅ Modules
 import { CommonModule } from "../common/common.module";
 import { StockModule } from "../stock/stock.module";
-import { Material, MaterialRepository, MaterialSchema } from "src/DB";
+import { Material, MaterialRepository, MaterialSchema } from "../../../DB";
 import { SupplierLedgerModule } from "../ledger/Supplier/supplier-ledger.module";
 
 @Module({
