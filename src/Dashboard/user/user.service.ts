@@ -6,7 +6,7 @@ import {
 
   import {  hash, sendEmail, TokenService } from '../../Common';
   import { TUser, UserRepository } from '../../DB';
-  import { CreateUserpDto } from './dto/index';
+  import { CreateUserDto } from './dto/index';
   import { otpRepository } from '../../DB/Models/Otp/otp.repository';
   
   @Injectable()
@@ -17,7 +17,7 @@ import {
       private readonly otpRepository: otpRepository,
     ) {}
   
-    async createService(createUserDto: CreateUserpDto): Promise<TUser> {
+    async createService(createUserDto: CreateUserDto): Promise<TUser> {
       const { name, email, password,role } = createUserDto;
   
       // تحقق إذا الإيميل موجود مسبقًا

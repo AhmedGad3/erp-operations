@@ -11,7 +11,7 @@ import {
 import { UserRoles } from '../../../Common/Enums';
 
   
-export class CreateUserpDto {
+export class CreateUserDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(3)
