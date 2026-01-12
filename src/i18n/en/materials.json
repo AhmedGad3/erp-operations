@@ -1,0 +1,27 @@
+{
+  "created": "Material created successfully",
+  "updated": "Material updated successfully",
+  "deleted": "Material deleted successfully",
+  "activated": "Material activated successfully",
+  "fetched": "Materials fetched successfully",
+  "categoriesFetched": "Main categories fetched successfully",
+  "subCategoriesFetched": "Sub-categories fetched successfully",
+  "lowStockFetched": "Low stock materials fetched successfully",
+  "dropdownFetched": "Dropdown materials fetched successfully",
+  "searchResults": "Search results fetched successfully",
+  "materialDetails": "Material details fetched successfully",
+  "errors": {
+    "notFound": "Material not found",
+    "invalidId": "Invalid material ID",
+    "alreadyExists": "This material already exists",
+    "nameExists": "This material name already exists",
+    "baseUnitNotFound": "Base unit not found",
+    "unitNotFound": "Unit not found",
+    "invalidMainCategory": "Invalid main category",
+    "multipleDefaultPurchase": "Cannot set more than one default purchase unit",
+    "multipleDefaultIssue": "Cannot set more than one default issue unit",
+    "alreadyDeleted": "Material already deleted",
+    "alreadyActive": "Material is already active",
+    "codeExists": "Code {{code}} already exists"
+  }
+}

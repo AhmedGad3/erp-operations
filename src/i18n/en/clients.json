@@ -1,0 +1,15 @@
+{
+    "created": "Client created successfully",
+    "updated": "Client updated successfully",
+    "deleted": "Client deleted successfully",
+    "activated": "Client activated successfully",
+    "fetched": "Clients fetched successfully",
+    "errors": {
+        "alreadyExists": "Client already exists",
+        "nameExists": "Client name already exists",
+        "codeExists": "Client code '{{code}}' already exists",
+        "notFound": "Client not found",
+        "invalidId": "Invalid client ID",
+        "alreadyActive": "Client is already active"
+    }
+}

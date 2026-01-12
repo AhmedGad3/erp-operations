@@ -1,0 +1,15 @@
+{
+  "created": "تم إنشاء فاتورة الشراء بنجاح",
+  "fetched": "تم جلب فواتير الشراء بنجاح",
+  "returnCreated": "تم تسجيل مرتجع المشتريات بنجاح",
+  
+  "errors": {
+    "notFound": "فاتورة الشراء غير موجودة",
+    "invalidId": "معرف فاتورة الشراء غير صالح",
+    "invalidTotal": "إجمالي الفاتورة يجب أن يكون أكبر من صفر",
+    "noOpenInvoices": "لا يوجد فواتير شراء مفتوحة",
+    "noPurchasesFound": "لا توجد فواتير شراء للمورد",
+    "insufficientStock": "المخزون غير كافٍ للمادة {{material}}. المتاح: {{available}}، المطلوب: {{requested}}",
+    "returnExceedsBalance": "مبلغ المرتجع {{returnAmount}} يتجاوز الرصيد الحالي {{currentBalance}}"
+  }
+}

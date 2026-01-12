@@ -1,0 +1,15 @@
+{
+  "created": "Payment created successfully",
+  "fetched": "Payments fetched successfully",
+  "openFetched": "Open invoices fetched successfully",
+  
+  "errors": {
+    "noBalance": "No outstanding balance for this supplier",
+    "exceedsBalance": "Amount {{amount}} exceeds outstanding balance {{balance}}",
+    "noRefundDue": "No refund due for this supplier. Current balance: {{balance}}",
+    "refundExceedsBalance": "Refund amount {{amount}} exceeds maximum due {{maxRefund}}",
+    "notFound": "Payment not found",
+    "invalidId": "Invalid payment ID",
+    "noPaymentsFound": "No payments found for this supplier"
+  }
+}

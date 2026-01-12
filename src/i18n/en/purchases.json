@@ -1,0 +1,15 @@
+{
+  "created": "Purchase invoice created successfully",
+  "fetched": "Purchase invoices fetched successfully",
+  "returnCreated": "Purchase return created successfully",
+  
+  "errors": {
+    "notFound": "Purchase invoice not found",
+    "invalidId": "Invalid purchase invoice ID",
+    "invalidTotal": "Total amount must be greater than zero",
+    "noOpenInvoices": "No open purchase invoices found",
+    "noPurchasesFound": "No purchases found for this supplier",
+    "insufficientStock": "Insufficient stock for material {{material}}. Available: {{available}}, Requested: {{requested}}",
+    "returnExceedsBalance": "Return amount {{returnAmount}} exceeds current balance {{currentBalance}}"
+  }
+}

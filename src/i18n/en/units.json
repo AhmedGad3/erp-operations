@@ -1,0 +1,27 @@
+{
+  "created": "Unit created successfully",
+  "updated": "Unit updated successfully",
+  "deleted": "Unit deleted successfully",
+  "activated": "Unit activated successfully",
+  "fetched": "Units fetched successfully",
+  "converted": "Units converted successfully",
+  
+  "errors": {
+    "notFound": "Unit not found",
+    "alreadyExists": "This unit already exists",
+    "codeExists": "Unit with code {{code}} already exists",
+    "categoryHasBase": "Category {{category}} already has a base unit: {{unit}}",
+    "baseUnitRequired": "baseUnitId is required for derived units",
+    "baseUnitNotFound": "Base unit not found",
+    "mustBeBaseUnit": "baseUnitId must reference a base unit",
+    "differentCategory": "Derived unit must have same category as base unit",
+    "conversionFactorRequired": "conversionFactor must be greater than 0 for derived units",
+    "alreadyDeleted": "Unit already deleted",
+    "unitInUse": "Cannot delete unit. It has derived units or is used in materials",
+    "alreadyActive": "Unit is already active",
+    "inactiveUnits": "Cannot convert using inactive units",
+    "differentCategories": "Cannot convert between units of different categories",
+    "notBaseUnit": "The specified unit is not a base unit",
+    "cannotModifyIsBase": "Cannot modify isBase property"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "created": "تم إنشاء المستلزم بنجاح",
+  "updated": "تم تحديث المستلزم بنجاح",
+  "deleted": "تم حذف المستلزم بنجاح",
+  "activated": "تم تفعيل المستلزم بنجاح",
+  "fetched": "تم جلب المستلزمات بنجاح",
+  "categoriesFetched": "تم جلب التصنيفات الرئيسية بنجاح",
+  "subCategoriesFetched": "تم جلب التصنيفات الفرعية بنجاح",
+  "lowStockFetched": "تم جلب المستلزمات المنخفضة بنجاح",
+  "dropdownFetched": "تم جلب قائمة المستلزمات بنجاح",
+  "searchResults": "تم جلب نتائج البحث بنجاح",
+  "materialDetails": "تم جلب تفاصيل المستلزم بنجاح",
+  "errors": {
+    "notFound": "المستلزم غير موجود",
+    "invalidId": "معرف المستلزم غير صالح",
+    "alreadyExists": "هذا المستلزم موجود بالفعل",
+    "nameExists": "اسم المستلزم مستخدم بالفعل",
+    "baseUnitNotFound": "الوحدة الأساسية غير موجودة",
+    "unitNotFound": "الوحدة غير موجودة",
+    "invalidMainCategory": "التصنيف الرئيسي غير صالح",
+    "multipleDefaultPurchase": "لا يمكن تعيين أكثر من وحدة افتراضية للشراء",
+    "multipleDefaultIssue": "لا يمكن تعيين أكثر من وحدة افتراضية للصرف",
+    "alreadyDeleted": "المستلزم محذوف بالفعل",
+    "alreadyActive": "المستلزم مفعل بالفعل",
+    "codeExists": "الكود {{code}} مستخدم بالفعل"
+  
+  }
+}

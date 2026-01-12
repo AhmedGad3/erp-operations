@@ -1,0 +1,17 @@
+{
+  "created": "Project created successfully",
+  "updated": "Project updated successfully",
+  "deleted": "Project deleted successfully",
+  "activated": "Project activated successfully",
+  "fetched": "Projects fetched successfully",
+  "statsFetched": "Project statistics fetched successfully",
+  
+  "errors": {
+    "notFound": "Project not found",
+    "invalidId": "Invalid project ID",
+    "codeExists": "Code {{code}} already exists",
+    "alreadyActive": "Project is already active",
+    "alreadyDeleted": "Project already deleted",
+    "cannotDelete": "Project cannot be deleted as it is on hold or in progress"
+  }
+}
