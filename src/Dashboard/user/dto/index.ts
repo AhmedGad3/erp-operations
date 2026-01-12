@@ -8,7 +8,7 @@ import {
     IsStrongPassword,
     MinLength,
   } from 'class-validator';
-import { UserRoles } from 'src/Common/Enums';
+import { UserRoles } from '../../../Common/Enums';
 
   
 export class CreateUserpDto {
