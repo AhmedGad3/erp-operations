@@ -7,8 +7,8 @@ import {
 import { compare, hash, sendEmail, TokenService } from '../Common';
 import { TUser, UserRepository } from '../DB';
 import { LoginDto, SignupDto, VerifyOtpDto } from './dto/index';
-import { otpRepository } from 'src/DB/Models/Otp/otp.repository';
-import { otpType } from 'src/DB/Models/Otp/otp.schema';
+import { otpRepository } from '../DB/Models/Otp/otp.repository';
+import { otpType } from '../DB/Models/Otp/otp.schema';
 
 @Injectable()
 export class AuthService {

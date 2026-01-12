@@ -12,7 +12,7 @@ import path from 'path';
      I18nModule.forRoot({
       fallbackLanguage: 'ar',
       loaderOptions: {
-        path: path.join(process.cwd(), 'src/i18n/'),
+        path: path.join(process.cwd(), './i18n/'),
         watch: true,
       },
       resolvers: [
