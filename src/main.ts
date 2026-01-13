@@ -7,8 +7,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import express, { Express } from 'express';
+import express from 'express';
 
+// للتشغيل المحلي
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
@@ -27,44 +28,39 @@ async function bootstrap() {
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
 
-// للـ Vercel Serverless
-const expressApp: Express = express();
-let app: any;
+// Serverless Handler للـ Vercel
+const server = express();
+let nestApp: any = null;
 
-async function createNestApp() {
-  if (!app) {
-    app = await NestFactory.create(
-      AppModule,
-      new ExpressAdapter(expressApp),
-      { 
-        logger: ['error', 'warn', 'log'],
-        abortOnError: false 
-      }
-    );
-    
-    app.enableCors({
-      origin: process.env.FRONTEND_URL || '*',
+const handler = async (req: any, res: any) => {
+  if (!nestApp) {
+    const expressAdapter = new ExpressAdapter(server);
+    nestApp = await NestFactory.create(AppModule, expressAdapter, {
+      logger: ['error', 'warn', 'log'],
+    });
+
+    nestApp.enableCors({
+      origin: '*',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
     });
-    
-    app.useGlobalPipes(
+
+    nestApp.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
     );
-    
-    await app.init();
-  }
-  return expressApp;
-}
 
-// Export للـ Vercel
-export default async (req: any, res: any) => {
-  const server = await createNestApp();
+    await nestApp.init();
+  }
+
   return server(req, res);
 };
 
 // للتشغيل المحلي
-if (require.main === module) {
+if (process.env.VERCEL !== '1' && require.main === module) {
   bootstrap();
 }
+
+// Export للـ Vercel
+module.exports = handler;
+module.exports.default = handler;
