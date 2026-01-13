@@ -1,19 +1,21 @@
-const { NestFactory } = require('@nestjs/core');
-const { ExpressAdapter } = require('@nestjs/platform-express');
-const { ValidationPipe } = require('@nestjs/common');
-const express = require('express');
+// Load environment variables
+require('dotenv').config();
 
-const server = express();
+const { NestFactory } = require('@nestjs/core');
+const { ValidationPipe } = require('@nestjs/common');
+
 let app = null;
 
 async function bootstrap() {
-  if (!app) {
-    // Import AppModule من dist
+  if (app) {
+    return app;
+  }
+
+  try {
     const { AppModule } = require('../dist/app.module');
-    const nestAdapter = new ExpressAdapter(server);
     
-    app = await NestFactory.create(AppModule, nestAdapter, {
-      logger: ['error', 'warn'],
+    app = await NestFactory.create(AppModule, {
+      logger: ['error', 'warn', 'log'],
     });
 
     app.enableCors({
@@ -28,11 +30,23 @@ async function bootstrap() {
     );
 
     await app.init();
+    
+    return app.getHttpAdapter().getInstance();
+  } catch (error) {
+    console.error('Failed to initialize NestJS app:', error);
+    throw error;
   }
-  return server;
 }
 
 module.exports = async (req, res) => {
-  const appServer = await bootstrap();
-  return appServer(req, res);
+  try {
+    const server = await bootstrap();
+    return server(req, res);
+  } catch (error) {
+    console.error('Handler error:', error);
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: error.message 
+    });
+  }
 };
