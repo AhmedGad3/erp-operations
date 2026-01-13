@@ -9,7 +9,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express, { Express } from 'express';
 
-// للتشغيل المحلي
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
