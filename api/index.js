@@ -21,7 +21,11 @@ async function bootstrap() {
 
     await app.init();
 
-    server = serverless(app.getHttpAdapter().getInstance());
+    server = serverless(app.getHttpAdapter().getInstance(),{
+  request: {
+    payload: true
+  }
+});
   }
   return server;
 }
