@@ -1,6 +1,7 @@
 import {
     ConflictException,
    Injectable,
+   NotFoundException,
 } from '@nestjs/common';
 
 
@@ -44,6 +45,14 @@ import {
       });
   
       return createdUser;
+    }
+
+    async getProfile(id: string): Promise<TUser> {
+      const user = await this.userRepository.findById(id);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
     }
   
   

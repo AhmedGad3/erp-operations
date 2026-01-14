@@ -1,4 +1,4 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import {  CreateUserDto } from './dto';
 import { Auth } from '../../Common';
@@ -17,6 +17,14 @@ export class UserController {
         message: 'user created successfully'
       },
     };
+
+
+  }
+
+  @Get('me')
+  async getMyProfile(@Req() req) {
+    return this.userService.getProfile(req.user._id);
+
   }
 
   
