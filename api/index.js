@@ -1,52 +1,37 @@
-// Load environment variables
 require('dotenv').config();
-
+const serverless = require('serverless-http');
 const { NestFactory } = require('@nestjs/core');
 const { ValidationPipe } = require('@nestjs/common');
 
-let app = null;
+let server;
 
 async function bootstrap() {
-  if (app) {
-    return app;
-  }
-
-  try {
+  if (!server) {
     const { AppModule } = require('../dist/app.module');
+    const app = await NestFactory.create(AppModule);
     
-    app = await NestFactory.create(AppModule, {
-      logger: ['error', 'warn', 'log'],
-    });
-
     app.enableCors({
       origin: '*',
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
+      methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+      allowedHeaders: ['Content-Type','Authorization','Accept-Language'],
     });
 
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
     await app.init();
-    
-    return app.getHttpAdapter().getInstance();
-  } catch (error) {
-    console.error('Failed to initialize NestJS app:', error);
-    throw error;
+
+    server = serverless(app.getHttpAdapter().getInstance());
   }
+  return server;
 }
 
 module.exports = async (req, res) => {
   try {
-    const server = await bootstrap();
-    return server(req, res);
+    const handler = await bootstrap();
+    return handler(req, res);
   } catch (error) {
     console.error('Handler error:', error);
-    res.status(500).json({ 
-      error: 'Internal Server Error',
-      message: error.message 
-    });
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 };
