@@ -19,7 +19,7 @@ export class UserRepository extends DBService<TUser> {
 
 
   findById(id: string | Types.ObjectId): Promise<TUser | null> {
-    return this.userModel.findById(id).select('name email role').exec();
+    return this.userModel.findById(id).select('name email role _id').exec();
   }
 
   findOne(filter?: FilterQuery<TUser> | undefined, projection?: ProjectionType<TUser> | undefined, options?: QueryOptions): Promise<TUser | null> {
