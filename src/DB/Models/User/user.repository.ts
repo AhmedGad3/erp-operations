@@ -1,6 +1,6 @@
 import { DBService } from '../../db.service';
 import { TUser, User } from './user.schema';
-import { FilterQuery, Model, ProjectionType, QueryOptions, Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 
@@ -21,8 +21,5 @@ export class UserRepository extends DBService<TUser> {
   findById(id: string | Types.ObjectId): Promise<TUser | null> {
     return this.userModel.findById(id).select('-password').exec();
   }
-
-  getName(id: string | Types.ObjectId): Promise<TUser | null> {
-    return this.userModel.findById(id).select('name email role _id').exec();
-  }
+  
 }
