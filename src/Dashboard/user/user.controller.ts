@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import {  CreateUserDto } from './dto';
 import { Auth } from '../../Common';
@@ -27,6 +27,10 @@ export class UserController {
 
   }
 
+  @Get('/:id')
+  async getProfile(@Param('id') id: string) {
+    return this.userService.getProfile(id);
+  }
   
 
 

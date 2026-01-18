@@ -1,6 +1,6 @@
 import { DBService } from '../../db.service';
 import { TUser, User } from './user.schema';
-import { Model } from 'mongoose';
+import { FilterQuery, Model, ProjectionType, QueryOptions, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 
@@ -15,5 +15,14 @@ export class UserRepository extends DBService<TUser> {
   findByEmail(email: string): Promise<TUser | null> {
     const userData = this.findOne({ email });
     return userData;
+  }
+
+
+  findById(id: string | Types.ObjectId): Promise<TUser | null> {
+    return this.userModel.findById(id).select('name email role').exec();
+  }
+
+  findOne(filter?: FilterQuery<TUser> | undefined, projection?: ProjectionType<TUser> | undefined, options?: QueryOptions): Promise<TUser | null> {
+    return this.userModel.findOne(filter, projection, options).select('name email role').exec();
   }
 }
