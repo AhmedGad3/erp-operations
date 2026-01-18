@@ -56,7 +56,7 @@ import {
     }
 
     async getUserName(id: string): Promise<string> {
-      const user = await this.userRepository.findById(id)
+      const user = await this.userRepository.getName(id)
       if (!user) {
         throw new NotFoundException('User not found');
       }
