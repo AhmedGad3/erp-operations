@@ -26,6 +26,11 @@ export class UserController {
 
   }
 
+  @Get(':id')
+  async getUser(@Req() req) {
+    return this.userService.getUserName(req.params.id);
+  }
+
 
   
 
