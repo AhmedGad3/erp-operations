@@ -58,7 +58,7 @@ import { Types } from 'mongoose';
   
   
     async getUserName(id: string | Types.ObjectId): Promise<TUser | null > {
-      return this.userRepository.getUserName(id);
+      return this.userRepository.findById(id);
     }
 
 
