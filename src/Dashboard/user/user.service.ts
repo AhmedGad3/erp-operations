@@ -57,10 +57,10 @@ import { Types } from 'mongoose';
     }
   
   
-    async getUserName(id: string | Types.ObjectId): Promise<TUser | null> {
-      return this.userRepository.findById(id);
+    async getUserName(id: string | Types.ObjectId): Promise<TUser | null > {
+      return this.userRepository.getUserName(id);
     }
-    
+
 
   }
   
