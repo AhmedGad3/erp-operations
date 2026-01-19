@@ -22,4 +22,8 @@ export class UserRepository extends DBService<TUser> {
     return this.userModel.findById(id).exec();
   }
   
+
+  getUserName(id: string | Types.ObjectId): Promise<TUser | null> {
+    return this.userModel.findById(id).select('name role').exec();
+  }
 }

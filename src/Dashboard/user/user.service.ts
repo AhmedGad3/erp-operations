@@ -9,6 +9,7 @@ import {
   import { TUser, UserRepository } from '../../DB';
   import { CreateUserDto } from './dto/index';
   import { otpRepository } from '../../DB/Models/Otp/otp.repository';
+import { Types } from 'mongoose';
   
   @Injectable()
   export class UserService {
@@ -56,7 +57,11 @@ import {
     }
   
   
-   
+    async getUserName(id: string | Types.ObjectId): Promise<TUser | null> {
+      return this.userRepository.findById(id);
+    }
+    
+
   }
   
   // async signupService(signupDto: SignupDto): Promise<{ message: string }> {
