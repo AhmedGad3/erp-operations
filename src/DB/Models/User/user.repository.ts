@@ -19,7 +19,7 @@ export class UserRepository extends DBService<TUser> {
 
 
   findById(id: string | Types.ObjectId): Promise<TUser | null> {
-    return this.userModel.findById(id).select('-password').exec();
+    return this.userModel.findById(id).exec();
   }
   
 }

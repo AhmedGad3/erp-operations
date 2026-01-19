@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import {  CreateUserDto } from './dto';
 import { Auth } from '../../Common';
@@ -8,6 +8,11 @@ import { Auth } from '../../Common';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('me')
+  async getMyProfile(@Req() req) {
+    return this.userService.getProfile(req.user._id);
+
+  }
   @Post('create-user')
   async signup(@Body() CreateUserDto: CreateUserDto) {
     const result = await this.userService.createService(CreateUserDto);
@@ -21,16 +26,7 @@ export class UserController {
 
   }
 
-  @Get('me')
-  async getMyProfile(@Req() req) {
-    return this.userService.getProfile(req.user._id);
 
-  }
-
-  @Get('/:id')
-  async getProfile(@Param('id') id: string) {
-    return this.userService.getProfile(id);
-  }
   
 
 
