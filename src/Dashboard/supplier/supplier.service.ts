@@ -39,7 +39,7 @@ export class SupplierService {
     }
 
     async findAllSuppliers() {
-        const suppliers = await this.supplierRepository.find({ isActive: true });
+        const suppliers = await this.supplierRepository.find({  });
         if (!suppliers || suppliers.length === 0) {
             throw new NotFoundException(this.i18n.translate('suppliers.errors.notFound', { lang: this.getLang() }));
         }
@@ -54,7 +54,7 @@ export class SupplierService {
         }
 
         const suppliers = await this.supplierRepository.find({
-            isActive: true,
+          
             $or: [
                 { nameAr: { $regex: searchTerm, $options: 'i' } },
                 { nameEn: { $regex: searchTerm, $options: 'i' } },
