@@ -18,6 +18,7 @@ export class SupplierPaymentService {
     constructor(
         @InjectModel(SupplierPayment.name)
         private readonly paymentModel: Model<SupplierPayment>,
+        
 
         @InjectModel(SupplierRefund.name)
         private readonly refundModel: Model<SupplierRefund>,
@@ -206,6 +207,10 @@ export class SupplierPaymentService {
     // ===============================
     async getAllPayments() {
         return this.paymentModel.find().sort({ paymentDate: -1 });
+    }
+
+    async getAllRefunds(){
+        return this.refundModel.find().sort({ refundDate: -1 });
     }
 
     async findById(id: string) {

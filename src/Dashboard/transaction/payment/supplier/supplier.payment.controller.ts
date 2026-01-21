@@ -44,6 +44,12 @@ export class SupplierPaymentController {
         return { result: payments, message: this.i18n.translate('payments.fetched', { lang: this.getLang() }) };
     }
 
+    @Get('refunds')
+    async getAllRefunds() {
+        const refunds = await this.supplierPaymentService.getAllRefunds();
+        return { result: refunds, message: this.i18n.translate('Refunds.fetched', { lang: this.getLang() }) };
+    }
+
 
     @Get('supplier/:supplierId')
     async getSupplierPayments(@Param('supplierId') supplierId: string) {
