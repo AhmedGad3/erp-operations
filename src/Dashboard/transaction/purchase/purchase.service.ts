@@ -418,6 +418,14 @@ async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
     return purchaseReturn;
 }
 
+async findAllReturns() {
+        return this.purchaseReturnModel
+            .find()
+            .sort({ returnNo: -1 })
+            .populate('supplierId', 'nameAr nameEn code')
+            .populate('createdBy', 'name');
+    }
+
 }
 
 // import {

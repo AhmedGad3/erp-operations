@@ -43,6 +43,12 @@ export class PurchaseController {
         const message = this.i18n.translate('purchases.fetched', { lang: this.getLang() });
         return { result: purchases, message };
     }
+    @Get('return')
+    async getAllPurchasesReturns() {
+        const returns = await this.purchaseService.findAllReturns();
+        const message = this.i18n.translate('returns.fetched', { lang: this.getLang() });
+        return { result: returns, message };
+    }
 
     @Get('supplier/:supplierId/open')
     async getOpenInvoices(@Param('supplierId') supplierId: string) {
