@@ -206,11 +206,11 @@ export class SupplierPaymentService {
     // Queries
     // ===============================
     async getAllPayments() {
-        return this.paymentModel.find().sort({ paymentDate: -1 });
+        return this.paymentModel.find().populate('supplierId', 'nameAr nameEn code').populate('createdBy', 'name email').sort({ paymentDate: -1 });
     }
 
     async getAllRefunds(){
-        return this.refundModel.find().sort({ refundDate: -1 });
+        return this.refundModel.find().populate('supplierId', 'nameAr nameEn code').populate('createdBy', 'name email').sort({ refundDate: -1 });
     }
 
     async findById(id: string) {
