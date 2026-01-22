@@ -423,7 +423,7 @@ async findAllReturns() {
             .find()
             .sort({ returnNo: -1 })
             .populate('supplierId', 'nameAr nameEn code')
-            .populate('createdBy', 'name')
+            .populate('createdBy', 'name email')
             .populate('items.materialId', 'nameAr nameEn code')
             .populate('items.unitId', 'nameAr nameEn symbol')
             .exec();
