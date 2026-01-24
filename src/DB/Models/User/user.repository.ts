@@ -39,7 +39,7 @@ softDelete(id: string,  user: TUser) {
   return this.userModel.findByIdAndUpdate(
     id,
     { 
-      isActive: true,
+      isActive: false,
       updatedBy: user._id as Types.ObjectId
     },
     { new: true }
