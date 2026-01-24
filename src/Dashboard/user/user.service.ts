@@ -7,9 +7,10 @@ import {
 
   import {  hash, sendEmail, TokenService } from '../../Common';
   import { TUser, UserRepository } from '../../DB';
-  import { CreateUserDto } from './dto/index';
+  import { CreateUserDto, UpdateUserDto } from './dto/index';
   import { otpRepository } from '../../DB/Models/Otp/otp.repository';
 import { Types } from 'mongoose';
+import { create } from 'domain';
   
   @Injectable()
   export class UserService {
@@ -19,7 +20,7 @@ import { Types } from 'mongoose';
       private readonly otpRepository: otpRepository,
     ) {}
   
-    async createService(createUserDto: CreateUserDto): Promise<TUser> {
+    async createService(createUserDto: CreateUserDto, user: TUser): Promise<TUser> {
       const { name, email, password,role } = createUserDto;
   
       // تحقق إذا الإيميل موجود مسبقًا
@@ -32,7 +33,8 @@ import { Types } from 'mongoose';
         name,
         email,
         password: hash(password),
-        role
+        role,
+        createdBy:user.id
       });
 
       await sendEmail({
@@ -61,6 +63,59 @@ import { Types } from 'mongoose';
       return this.userRepository.findById(id);
     }
 
+
+    // ================= Update User =================
+async updateUser(
+  id: string,
+  updateUserDto: UpdateUserDto,
+  user: TUser
+): Promise<TUser> {
+  const exist = await this.userRepository.findById(id);
+  if (!exist ) {
+    throw new NotFoundException('User not found');
+  }
+
+  if (updateUserDto.email) {
+    const existing = await this.userRepository.findByEmail(updateUserDto.email) as TUser;
+    if (existing && existing._id?.toString() !== id) {
+      throw new ConflictException('Email already in use');
+    }
+  }
+
+  const updatePayload = {
+  ...updateUserDto,
+  updatedBy: user._id as Types.ObjectId,
+};
+
+const updatedUser = await this.userRepository.updateById(id, updatePayload);
+
+  return updatedUser as TUser;
+}
+
+// ================= Soft Delete =================
+async softDeleteUser(id: string, user: TUser): Promise<TUser> {
+    const exist = await this.userRepository.findById(id);
+
+  if (!exist) {
+    throw new NotFoundException('User not found');
+  }
+
+  if (exist.isDeleted) {
+    throw new ConflictException('User already deleted');
+  }
+
+  if (exist._id?.toString() === user._id?.toString()) {
+    throw new ConflictException('You cannot delete yourself');
+  }
+
+  const deletedUser = await this.userRepository.softDelete(id, user.id);
+  return deletedUser as TUser;
+}
+
+// ================= Get All =================
+async getAllUsers(): Promise<TUser[]> {
+  return this.userRepository.findAll();
+}
 
   }
   

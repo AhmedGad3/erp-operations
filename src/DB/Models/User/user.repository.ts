@@ -19,9 +19,33 @@ export class UserRepository extends DBService<TUser> {
 
 
   findById(id: string | Types.ObjectId): Promise<TUser | null> {
-    return this.userModel.findById(id).exec();
+    return this.userModel.findById(id).select('-password').exec();
   }
   
+  findAll() {
+  return this.userModel.find().exec();
+}
+
+updateById(id: string, data: Partial<TUser>) {
+  return this.userModel.findByIdAndUpdate(
+    id,
+    data,
+    { new: true }
+  ).exec();
+}
+
+
+softDelete(id: string,  user: TUser) {
+  return this.userModel.findByIdAndUpdate(
+    id,
+    { 
+      isDeleted: true,
+      updatedBy: user._id as Types.ObjectId
+    },
+    { new: true }
+  ).exec();
+}
+
 
   
 }

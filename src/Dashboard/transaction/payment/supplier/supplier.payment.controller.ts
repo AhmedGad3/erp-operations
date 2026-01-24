@@ -47,6 +47,7 @@ export class SupplierPaymentController {
     @Get('refunds')
     async getAllRefunds() {
         const refunds = await this.supplierPaymentService.getAllRefunds();
+        
         return { result: refunds, message: this.i18n.translate('Refunds.fetched', { lang: this.getLang() }) };
     }
 

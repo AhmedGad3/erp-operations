@@ -40,4 +40,21 @@ export class CreateUserDto {
     
   }
   
- 
+
+
+export class UpdateUserDto {
+  @IsString()
+  @MinLength(3)
+  @IsOptional()
+  name?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsEnum(UserRoles)
+  @IsOptional()
+  role?: UserRoles;
+
+  
+}
