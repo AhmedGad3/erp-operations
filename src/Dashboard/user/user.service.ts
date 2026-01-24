@@ -100,7 +100,7 @@ async softDeleteUser(id: string, user: TUser): Promise<TUser> {
     throw new NotFoundException('User not found');
   }
 
-  if (exist.isDeleted) {
+  if (exist.isActive === false) {
     throw new ConflictException('User already deleted');
   }
 

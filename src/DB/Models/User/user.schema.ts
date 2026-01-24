@@ -17,8 +17,8 @@ export class User extends Document {
   @Prop({ type: String, enum: UserRoles, default: UserRoles.USER })
   role: string;
 
-  @Prop({ type: Boolean, default: false })
-  isDeleted: boolean;
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
 
   @Prop({type: Types.ObjectId, ref: 'User'})
   createdBy: Types.ObjectId;
