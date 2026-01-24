@@ -46,6 +46,16 @@ softDelete(id: string,  user: TUser) {
   ).exec();
 }
 
+activateUser(id: string,  user: TUser) {
+  return this.userModel.findByIdAndUpdate(
+    id,
+    { 
+      isActive: true,
+      updatedBy: user._id as Types.ObjectId
+    },
+    { new: true }
+  ).exec();
 
   
+}
 }

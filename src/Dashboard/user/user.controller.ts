@@ -56,6 +56,22 @@ async updateUser(
   };
 }
 
+// ============ Activate User ============
+@Patch('user/activate/:id')
+async activateUser(
+  @Param('id') id: string,
+  @Req() req: Request
+) {
+  const result = await this.userService.activateUser(
+    id,
+    req['user']
+  );
+
+  return {
+    message: 'User activated successfully',
+    result,
+  };    
+}
 // ============ Soft Delete User ============
 @Delete('user/:id')
 async deleteUser(
@@ -69,9 +85,10 @@ async deleteUser(
 
   return {
     message: 'User deleted successfully',
-    result,
   };
 }
+
+
 
 
  

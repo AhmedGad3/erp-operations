@@ -93,7 +93,7 @@ const updatedUser = await this.userRepository.updateById(id, updatePayload);
 }
 
 // ================= Soft Delete =================
-async softDeleteUser(id: string, user: TUser): Promise<TUser> {
+async softDeleteUser(id: string, user: TUser) {
     const exist = await this.userRepository.findById(id);
 
   if (!exist) {
@@ -117,7 +117,22 @@ async getAllUsers(): Promise<TUser[]> {
   return this.userRepository.findAll();
 }
 
+async activateUser(id: string, user: TUser) {
+    const exist = await this.userRepository.findById(id);
+
+  if (!exist) {
+    throw new NotFoundException('User not found');
   }
+
+  if (exist.isActive === true) {
+    throw new ConflictException('User already active');
+  }
+
+  const activatedUser = await this.userRepository.activateUser(id, user.id);
+  return activatedUser as TUser;
+}
+  
+}
   
   // async signupService(signupDto: SignupDto): Promise<{ message: string }> {
   //   const { name, email, password } = signupDto;
