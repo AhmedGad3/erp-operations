@@ -19,6 +19,7 @@ async findById(id: string | Types.ObjectId): Promise<TClient | null> {
     return await this.clientModel
         .findById(id)
         .populate('projects', 'nameAr nameEn -_id')
+        .populate('createdBy', 'name')
         .exec();
 }
 
