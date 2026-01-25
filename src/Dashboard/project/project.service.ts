@@ -76,7 +76,7 @@ export class ProjectService {
 
 
       async findAll(): Promise<TProject[] | null> {
-        return this.projectRepository.find({ isActive: true });
+        return this.projectRepository.find();
     }
 
     async findById(id: string): Promise<TProject> {

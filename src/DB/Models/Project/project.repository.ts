@@ -70,7 +70,7 @@ export class ProjectRepository extends DBService<TProject> {
         const regex = new RegExp(searchTerm.trim(), 'i');
         return this.projectModel
             .find({
-                isActive: true,
+              
                 $or: [
                     { nameAr: regex },
                     { nameEn: regex },
