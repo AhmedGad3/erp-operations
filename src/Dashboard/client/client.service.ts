@@ -57,7 +57,7 @@ export class ClientService {
     } 
 
     async findAllClients(): Promise<TClient[]> {
-            return await this.clientRepository.find({ isActive: true })! as TClient[];;
+            return await this.clientRepository.find() as TClient[];;
         }
 
 
