@@ -143,9 +143,9 @@ export class ClientPaymentService {
         return this.clientPaymentModel
             .find()
             .sort({ paymentDate: -1 })
-            .populate('clientId', 'nameAr nameEn')
-            .populate('projectId', 'nameAr nameEn code')
-            .populate('createdBy', 'name')
+              .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')
             .exec();
     }
 
@@ -186,7 +186,9 @@ export class ClientPaymentService {
         return this.clientPaymentModel
             .find({ projectId: new Types.ObjectId(projectId) })
             .sort({ paymentDate: -1 })
-            .populate('createdBy', 'name')
+             .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')
             .exec();
     }
 
