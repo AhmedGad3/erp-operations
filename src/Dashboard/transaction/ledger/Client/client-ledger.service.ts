@@ -90,8 +90,9 @@ export class ClientLedgerService {
     return this.ledgerModel
       .find()
       .sort({ transactionDate: -1 })
-      .populate('clientId', 'nameAr nameEn')
-      .populate('projectId', 'nameAr nameEn code')
+          .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')
       .exec();
   }
 
@@ -102,8 +103,9 @@ export class ClientLedgerService {
     return this.ledgerModel
       .find({ clientId: new Types.ObjectId(clientId) })
       .sort({ transactionDate: -1 })
-      .populate('projectId', 'nameAr nameEn code')
-      .exec();
+ .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')      .exec();
   }
 
   /**
@@ -113,8 +115,9 @@ export class ClientLedgerService {
     return this.ledgerModel
       .find({ projectId: new Types.ObjectId(projectId) })
       .sort({ transactionDate: -1 })
-      .populate('clientId', 'nameAr nameEn')
-      .exec();
+ .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')      .exec();
   }
 
   /**
