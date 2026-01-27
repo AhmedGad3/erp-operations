@@ -160,9 +160,9 @@ export class ClientPaymentService {
 
         const payment = await this.clientPaymentModel
             .findById(id)
-            .populate('clientId', 'nameAr nameEn phone')
-            .populate('projectId', 'nameAr nameEn code')
-            .populate('createdBy', 'name')
+              .populate('clientId', 'nameAr nameEn code phone email isActive')
+            .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
+            .populate('createdBy', 'name email')
             .exec();
 
         if (!payment) {

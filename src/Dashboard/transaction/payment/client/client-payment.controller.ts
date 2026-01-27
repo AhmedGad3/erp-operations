@@ -93,4 +93,6 @@ export class ClientPaymentController {
       message: this.i18n.translate('clientPayment.fetched', { lang }),
     };
   }
+
+  
 }
