@@ -27,11 +27,6 @@ class MaterialIssueItemDto {
     @IsNotEmpty()
     quantity: number;
 
-    // @IsNumber()
-    // @Min(0)
-    // @IsNotEmpty()
-    // unitCost: number;
-
     @IsNumber()
     @Min(0)
     @IsNotEmpty()
