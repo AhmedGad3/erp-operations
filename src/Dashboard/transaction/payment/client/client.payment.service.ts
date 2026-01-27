@@ -202,7 +202,8 @@ export class ClientPaymentService {
         return this.clientPaymentModel
             .find({ clientId: new Types.ObjectId(clientId) })
             .sort({ paymentDate: -1 })
-            .populate('projectId', 'nameAr nameEn code')
+            .populate('client')
+            .populate('project')
             .populate('createdBy', 'name')
             .exec();
     }
