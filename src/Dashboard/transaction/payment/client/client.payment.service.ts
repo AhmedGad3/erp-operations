@@ -205,7 +205,6 @@ export class ClientPaymentService {
             .populate('clientId', 'nameAr nameEn code phone email isActive')
             .populate('projectId', 'nameAr nameEn code location startDate endDate contractAmount totalPaid totalInvoiced materialCosts laborCosts otherCosts totalCosts laborDetails status, isActive createdBy updatedBy')
             .populate('createdBy', 'name email')
-            .populate('updatedBy', 'name email')
             .exec();
     }
 

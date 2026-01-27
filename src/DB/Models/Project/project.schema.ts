@@ -117,7 +117,7 @@ export class Project {
     createdBy: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'User' })
-    updatedBy?: Types.ObjectId;
+    updatedBy: Types.ObjectId;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
