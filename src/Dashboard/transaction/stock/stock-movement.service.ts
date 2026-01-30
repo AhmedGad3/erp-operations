@@ -1,7 +1,7 @@
 
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
+import { HydratedDocument, Model, Types } from "mongoose";
 import { StockMovement, StockMovementDocument, StockMovementType } from "../../../DB/Models/Transaction/stock-movement.schema";
 import { CounterService } from "../common/counter.service";
 import { MaterialRepository } from "../../../DB";
@@ -112,54 +112,72 @@ export class StockMovementService {
         return movement;
     }
 
-  async createAdjustment(data: {
-    materialId: Types.ObjectId;
-    unitId: Types.ObjectId;
-    actualQuantity: number; 
-    reason: string;
-    createdBy: Types.ObjectId;
-}) {
-    const material = await this.materialRepository.findById(data.materialId);
-    if (!material) {
-        throw new BadRequestException('Material not found');
+async createAdjustments(
+    data: {
+        adjustments: {
+            materialId: Types.ObjectId;
+            unitId: Types.ObjectId;
+            actualQuantity: number;
+            reason: string;
+        }[];
+        createdBy: Types.ObjectId;
     }
+) {
+    const results = [];
 
-    let conversionFactor = 1;
-    if (data.unitId.toString() !== material.baseUnit.toString()) {
-        const altUnit = material.alternativeUnits?.find(
-            u => u.unitId.toString() === data.unitId.toString()
-        );
-        if (!altUnit) {
-            throw new BadRequestException('Invalid unit for this material');
+    for (const item of data.adjustments) {
+        const material = await this.materialRepository.findById(item.materialId);
+        if (!material) {
+            throw new BadRequestException(`Material not found: ${item.materialId}`);
         }
-        conversionFactor = altUnit.conversionFactor;
+
+        let conversionFactor = 1;
+        if (item.unitId.toString() !== material.baseUnit.toString()) {
+            const altUnit = material.alternativeUnits?.find(
+                u => u.unitId.toString() === item.unitId.toString()
+            );
+
+            if (!altUnit) {
+                throw new BadRequestException(
+                    `Invalid unit for material: ${material.nameAr} | ${material.nameEn}`
+                );
+            }
+
+            conversionFactor = altUnit.conversionFactor;
+        }
+
+        const actualQuantityInBaseUnit = item.actualQuantity * conversionFactor;
+        const currentStock = material.currentStock ?? 0;
+
+        const difference = actualQuantityInBaseUnit - currentStock;
+
+        if (difference === 0) continue; // ⬅️ مهم: نعدي اللي مفيهوش فرق
+
+        const adjustmentType =
+            difference > 0
+                ? StockMovementType.ADJUSTMENT_IN
+                : StockMovementType.ADJUSTMENT_OUT;
+
+        const adjustmentQuantity = Math.abs(difference);
+
+        const results: HydratedDocument<StockMovement>[] = [];
+
+const adjustment = await this.create({
+    materialId: material._id,
+    unitId: material.baseUnit,
+    type: adjustmentType,
+    quantity: adjustmentQuantity,
+    referenceType: 'StockAdjustment',
+    referenceId: new Types.ObjectId(),
+    notes: `Adjustment: ${item.reason}`,
+    createdBy: data.createdBy,
+});
+
+results.push(adjustment);
     }
 
-    const actualQuantityInBaseUnit = data.actualQuantity * conversionFactor;
-    const currentStock = material.currentStock ?? 0;
-
-    const difference = actualQuantityInBaseUnit - currentStock;
-
-    if (difference === 0) {
-        throw new BadRequestException('No adjustment needed - stock matches actual count');
-    }
-
-    const adjustmentType = difference > 0 
-        ? StockMovementType.ADJUSTMENT_IN 
-        : StockMovementType.ADJUSTMENT_OUT;
-
-    const adjustmentQuantity = Math.abs(difference);
-
-    return this.create({
-        materialId: new Types.ObjectId(data.materialId) ,
-        unitId: new Types.ObjectId(material.baseUnit), 
-        type: adjustmentType,
-        quantity: adjustmentQuantity, 
-        referenceType: 'StockAdjustment',
-        referenceId: new Types.ObjectId(),
-        notes: `Adjustment: ${data.reason} | Diff: ${difference > 0 ? '+' : ''}${difference}`,
-        createdBy: data.createdBy,
-    });
+    return results;
 }
+
 
 }
