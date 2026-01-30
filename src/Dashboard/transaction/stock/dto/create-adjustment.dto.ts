@@ -1,14 +1,17 @@
 
+import { Type } from 'class-transformer';
 import {
+    IsArray,
     IsMongoId,
     IsNotEmpty,
     IsNumber,
     IsString,
     Min,
+    ValidateNested,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
-export class CreateAdjustmentDto {
+export class AdjustmentItemDto {
     @IsMongoId()
     @IsNotEmpty()
     materialId: Types.ObjectId;
@@ -20,9 +23,16 @@ export class CreateAdjustmentDto {
     @IsNumber()
     @Min(0)
     @IsNotEmpty()
-    actualQuantity: number; 
+    actualQuantity: number;
 
     @IsString()
     @IsNotEmpty()
-    reason: string; 
+    reason: string;
+}
+
+export class CreateAdjustmentDto {
+     @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => AdjustmentItemDto)
+    adjustments: AdjustmentItemDto[];
 }

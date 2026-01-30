@@ -22,8 +22,8 @@ async createAdjustment(
     @Req() req: Request,
 ) {
     const lang = this.getLang();
-    const result = await this.stockMovementService.createAdjustment({
-        ...dto,
+    const result = await this.stockMovementService.createAdjustments({
+        adjustments: dto.adjustments,
         createdBy: req['user']._id,
     });
     return {
