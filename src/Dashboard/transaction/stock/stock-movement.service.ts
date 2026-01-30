@@ -123,8 +123,8 @@ async createAdjustments(
         createdBy: Types.ObjectId;
     }
 ) {
-    const results = [];
 
+    const results: HydratedDocument<StockMovement>[] = [];
     for (const item of data.adjustments) {
         const material = await this.materialRepository.findById(item.materialId);
         if (!material) {
@@ -160,7 +160,6 @@ async createAdjustments(
 
         const adjustmentQuantity = Math.abs(difference);
 
-        const results: HydratedDocument<StockMovement>[] = [];
 
 const adjustment = await this.create({
     materialId: material._id,
