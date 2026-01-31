@@ -2,7 +2,6 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { TokenService } from '../Services';
@@ -12,33 +11,45 @@ import { Reflector } from '@nestjs/core';
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private tokenService: TokenService,
-    private userRepository: UserRepository,
+    private readonly tokenService: TokenService,
+    private readonly userRepository: UserRepository,
     private readonly reflector: Reflector,
   ) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const publicVal = this.reflector.getAllAndMerge('public', [
+
+    // السماح بالـ public routes
+    const isPublic = this.reflector.getAllAndOverride<boolean>('public', [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (publicVal.length) return true;
+    if (isPublic) return true;
 
-    const { authorization } = request.headers;
-    if (!authorization || !authorization.startsWith('Bearer')) {
-      throw new UnauthorizedException('Invalid or missing bearer token');
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing or invalid authorization token');
     }
-    const token = authorization.split(' ')[1];
-    const data = this.tokenService.verify(token, {
-      secret: process.env.JWT_SECRET,
-    });
 
-    const user = await this.userRepository.findOne({ _id: data._id });
-    if (!user) {
-      throw new NotFoundException('user not found');
+    const token = authHeader.split(' ')[1];
+
+    try {
+      // verify token
+      const payload = this.tokenService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      // find user
+      const user = await this.userRepository.findOne({ _id: payload._id });
+      if (!user) {
+        throw new UnauthorizedException('User no longer exists');
+      }
+
+      request.user = user;
+      return true;
+    } catch (err) {
+      // أي خطأ JWT (expired / malformed / invalid)
+      throw new UnauthorizedException('Invalid or expired token' + err.message);
     }
-    request.user = user;
-
-    return true;
   }
 }
