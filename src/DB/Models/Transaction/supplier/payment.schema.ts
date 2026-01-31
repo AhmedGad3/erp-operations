@@ -12,6 +12,9 @@ export class SupplierPayment {
     @Prop({ required: true, min: 0 })
     amount: number;
 
+     @Prop({ type: Number, default: 0, min: 0 })
+    discountAmount: number;
+
     @Prop({ required: true, enum: ['CASH', 'TRANSFER', 'CHEQUE'] })
     method: string;
 

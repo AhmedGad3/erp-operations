@@ -24,6 +24,12 @@ export class CreatePaymentDto {
     @Min(0.01)
     amount: number;
 
+    
+@IsOptional()
+    @IsNumber()
+    @Min(0)
+    discountAmount?: number = 0;
+
     @IsEnum(PaymentMethod)
     method: PaymentMethod;
 

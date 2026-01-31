@@ -38,64 +38,135 @@ export class SupplierPaymentService {
     // ===============================
     // Create Supplier Payment
     // ===============================
-    async createPayment(dto: CreatePaymentDto, user: TUser) {
-        const lang = this.getLang();
+    // async createPayment(dto: CreatePaymentDto, user: TUser) {
+    //     const lang = this.getLang();
 
-        // ✅ Get current balance
-        const currentBalance =
-            await this.ledgerService.getCurrentBalance(dto.supplierId);
+    //     // ✅ Get current balance
+    //     const currentBalance =
+    //         await this.ledgerService.getCurrentBalance(dto.supplierId);
 
-        // ✅ Check 1: الرصيد لازم يكون موجب (فيه مديونية)
-        if (currentBalance <= 0) {
-            throw new BadRequestException(
-                this.i18n.translate('payment.errors.noBalance', { lang }),
-            );
-        }
+    //     // ✅ Check 1: الرصيد لازم يكون موجب (فيه مديونية)
+    //     if (currentBalance <= 0) {
+    //         throw new BadRequestException(
+    //             this.i18n.translate('payment.errors.noBalance', { lang }),
+    //         );
+    //     }
 
-        // ✅ Check 2: المبلغ لازم يكون <= الرصيد (no overpayment)
-        if (dto.amount > currentBalance) {
-            throw new BadRequestException(
-                this.i18n.translate('payment.errors.exceedsBalance', {
-                    lang,
-                    args: { amount: dto.amount, balance: currentBalance },
-                }),
-            );
-        }
+    //     // ✅ Check 2: المبلغ لازم يكون <= الرصيد (no overpayment)
+    //     if (dto.amount > currentBalance) {
+    //         throw new BadRequestException(
+    //             this.i18n.translate('payment.errors.exceedsBalance', {
+    //                 lang,
+    //                 args: { amount: dto.amount, balance: currentBalance },
+    //             }),
+    //         );
+    //     }
 
-        // 1️⃣ Payment Number
-        const paymentNo =
-            await this.counterService.getNext('supplier-payment');
+    //     // 1️⃣ Payment Number
+    //     const paymentNo =
+    //         await this.counterService.getNext('supplier-payment');
 
-        // 2️⃣ Create Payment
-        const payment = await this.paymentModel.create({
-            paymentNo,
-            supplierId: dto.supplierId,
-            amount: dto.amount,
-            method: dto.method,
-            transferRef: dto.transferRef,
-            chequeNo: dto.chequeNo,
-            paymentDate: new Date(dto.paymentDate),
-            notes: dto.notes,
-            createdBy: user._id,
-        });
+    //     // 2️⃣ Create Payment
+    //     const payment = await this.paymentModel.create({
+    //         paymentNo,
+    //         supplierId: dto.supplierId,
+    //         amount: dto.amount,
+    //         method: dto.method,
+    //         transferRef: dto.transferRef,
+    //         chequeNo: dto.chequeNo,
+    //         paymentDate: new Date(dto.paymentDate),
+    //         notes: dto.notes,
+    //         createdBy: user._id,
+    //     });
 
-        // 3️⃣ Ledger Entry (CREDIT)
-        await this.ledgerService.createTransaction({
-            supplierId: dto.supplierId,
-            debit: 0,
-            credit: dto.amount,
-            type: 'payment',
-            referenceType: 'SupplierPayment',
-            referenceId: payment._id,
-            createdBy: user._id as Types.ObjectId,
-        });
+    //     // 3️⃣ Ledger Entry (CREDIT)
+    //     await this.ledgerService.createTransaction({
+    //         supplierId: dto.supplierId,
+    //         debit: 0,
+    //         credit: dto.amount,
+    //         type: 'payment',
+    //         referenceType: 'SupplierPayment',
+    //         referenceId: payment._id,
+    //         createdBy: user._id as Types.ObjectId,
+    //     });
 
-        // 4️⃣ Allocate to invoices
-        await this.allocatePaymentToInvoices(dto.supplierId, dto.amount);
+    //     // 4️⃣ Allocate to invoices
+    //     await this.allocatePaymentToInvoices(dto.supplierId, dto.amount);
 
-        return payment;
+    //     return payment;
+    // }
+async createPayment(dto: CreatePaymentDto, user: TUser) {
+    const lang = this.getLang();
+    const discountAmount = dto.discountAmount ?? 0;
+
+    // ✅ الـ totalAmount هو اللي هيخصم من الرصيد (الدفعة + الخصم)
+    const totalAmount = dto.amount + discountAmount;
+
+    // ✅ Get current balance
+    const currentBalance =
+        await this.ledgerService.getCurrentBalance(dto.supplierId);
+
+    // ✅ Check 1: الرصيد لازم يكون موجب (فيه مديونية)
+    if (currentBalance <= 0) {
+        throw new BadRequestException(
+            this.i18n.translate('payment.errors.noBalance', { lang }),
+        );
     }
 
+    // ✅ Check 2: الـ totalAmount لازم يكون <= الرصيد (no overpayment)
+    if (totalAmount > currentBalance) {
+        throw new BadRequestException(
+            this.i18n.translate('payment.errors.exceedsBalance', {
+                lang,
+                args: { amount: totalAmount, balance: currentBalance },
+            }),
+        );
+    }
+
+    // ✅ Check 3: الخصم لازم يكون أقل من الرصيد لوحده
+    if (discountAmount >= currentBalance) {
+        throw new BadRequestException(
+            this.i18n.translate('payment.errors.discountExceedsBalance', {
+                lang,
+                args: { discount: discountAmount, balance: currentBalance },
+            }),
+        );
+    }
+
+    // 1️⃣ Payment Number
+    const paymentNo =
+        await this.counterService.getNext('supplier-payment');
+
+    // 2️⃣ Create Payment
+    const payment = await this.paymentModel.create({
+        paymentNo,
+        supplierId: dto.supplierId,
+        amount: dto.amount,
+        discountAmount,                          // ✅ الجديد
+        method: dto.method,
+        transferRef: dto.transferRef,
+        chequeNo: dto.chequeNo,
+        paymentDate: new Date(dto.paymentDate),
+        notes: dto.notes,
+        createdBy: user._id,
+    });
+
+    // 3️⃣ Ledger Entry (CREDIT) — بالـ totalAmount مش بالـ amount فقط
+    await this.ledgerService.createTransaction({
+        supplierId: dto.supplierId,
+        debit: 0,
+        credit: totalAmount,                     // ✅ الجديد: amount + discount
+        type: 'payment',
+        referenceType: 'SupplierPayment',
+        referenceId: payment._id,
+        createdBy: user._id as Types.ObjectId,
+    });
+
+    // 4️⃣ Allocate to invoices — بالـ totalAmount مش بالـ amount فقط
+    await this.allocatePaymentToInvoices(dto.supplierId, totalAmount); // ✅ الجديد
+
+    return payment;
+}
     // ===============================
     // Allocate payment
     // ===============================

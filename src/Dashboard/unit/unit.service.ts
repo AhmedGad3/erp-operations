@@ -126,7 +126,7 @@ export class UnitService {
     if (category) {
       return await this.unitRepository.findByCategory(category);
     }
-    const result = await this.unitRepository.find({ isActive: true });
+    const result = await this.unitRepository.find();
 
     return result || [];
   }

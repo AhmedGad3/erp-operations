@@ -89,7 +89,7 @@ export class MaterialService {
 
 
     async findAllMaterials(): Promise<TMaterial[]> {
-        return await this.materialRepository.find({ isActive: true })! as TMaterial[];;
+        return await this.materialRepository.find({  }) as TMaterial[];;
     }
 
 
@@ -144,7 +144,6 @@ export class MaterialService {
 
         const material = await this.materialRepository.findOne({
             _id: new Types.ObjectId(id),
-            isActive: true
         });
         if (!material) {
             throw new NotFoundException(

@@ -75,7 +75,7 @@ async findActiveBaseUnits(): Promise<TUnit[]> {
 
     return this.unitModel
       .find({
-        isActive: true,
+        
         $or: [
           { nameAr: searchRegex },
           { nameEn: searchRegex },
