@@ -155,8 +155,8 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
     await this.ledgerService.createTransaction({
         supplierId: dto.supplierId,
         debit: 0,
-        credit: totalAmount,                     // ✅ الجديد: amount + discount
-        type: 'payment',
+ credit: dto.amount,                        
+    discountAmount: discountAmount,           type: 'payment',
         referenceType: 'SupplierPayment',
         referenceId: payment._id,
         createdBy: user._id as Types.ObjectId,

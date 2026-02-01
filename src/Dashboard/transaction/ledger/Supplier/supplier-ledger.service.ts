@@ -23,11 +23,15 @@ export class SupplierLedgerService {
         supplierId: Types.ObjectId;
         debit: number;
         credit: number;
+        discountAmount?: number;
         type: string;
         referenceType: string;
         referenceId: Types.ObjectId;
         createdBy: Types.ObjectId;
     }) {
+        const discountAmount = data.discountAmount ?? 0;
+
+            const totalCredit = data.credit + discountAmount
 
         if (data.debit < 0 || data.credit < 0) {
             throw new BadRequestException('Debit/Credit cannot be negative');
@@ -50,12 +54,15 @@ export class SupplierLedgerService {
         // Generate number
         const transactionNo = await this.counterService.getNext('supplier-transaction');
 
-        const balanceAfter = lastBalance + data.debit - data.credit;
+        const balanceAfter = lastBalance + data.debit - totalCredit;
+        
 
         // Create transaction
         const transaction = await this.ledgerModel.create({
             ...data,
             transactionNo,
+            credit: totalCredit,     
+        discountAmount, 
             balanceAfter,
             transactionDate: new Date(),
         });
