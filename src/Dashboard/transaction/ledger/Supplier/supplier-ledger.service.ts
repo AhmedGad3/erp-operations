@@ -61,7 +61,7 @@ export class SupplierLedgerService {
         const transaction = await this.ledgerModel.create({
             ...data,
             transactionNo,
-            credit: totalCredit,     
+            credit: data.credit,     
         discountAmount, 
             balanceAfter,
             transactionDate: new Date(),
