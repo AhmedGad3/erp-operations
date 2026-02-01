@@ -223,9 +223,9 @@ async updateLaborCosts(
 
     // ===== حساب التكلفة الجديدة (اللي هنضيفها) =====
     const addedLaborCost =
-        dto.laborDetails.numberOfWorkers *
-        dto.laborDetails.monthlyCost *
-        dto.numberOfMonths; // 👈 من الـ DTO
+    dto.laborDetails.numberOfWorkers *
+    dto.laborDetails.monthlyCost *
+    dto.laborDetails.numberOfMonths;
 
     // ===== تحديث تراكمي =====
     project.laborCosts += addedLaborCost;
