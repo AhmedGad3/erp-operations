@@ -19,7 +19,7 @@ export class SupplierLedgerService {
     /**
      * ⚠️ WARNING: NO SESSION - Development only
      */
-    async createTransaction(data: {
+     async createTransaction(data: {
         supplierId: Types.ObjectId;
         debit: number;
         credit: number;
@@ -69,7 +69,6 @@ export class SupplierLedgerService {
 
         return transaction;
     }
-
     async getCurrentBalance(supplierId: Types.ObjectId): Promise<number> {
         const last = await this.ledgerModel
             .findOne({ supplierId })
