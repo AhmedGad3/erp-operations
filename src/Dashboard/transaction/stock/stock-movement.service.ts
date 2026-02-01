@@ -178,5 +178,8 @@ results.push(adjustment);
     return results;
 }
 
+async getStockMovements() {
+    return this.stockModel.find().sort({ movementDate: -1 });
+}
 
 }

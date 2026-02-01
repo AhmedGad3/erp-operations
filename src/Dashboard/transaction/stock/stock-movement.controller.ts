@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req } from "@nestjs/common";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { Auth } from "../../../Common";
 import { StockMovementService } from "./stock-movement.service";
@@ -29,6 +29,16 @@ async createAdjustment(
     return {
         result,
         message: this.i18n.translate('stock.adjustmentCreated', { lang }),
+    };
+}
+
+@Get('movements')
+async getMovements(@Req() req: Request) {
+    const lang = this.getLang();
+    const result = await this.stockMovementService.getStockMovements();
+    return {
+        result,
+        message: this.i18n.translate('stock.movements', { lang }),
     };
 }
 }
