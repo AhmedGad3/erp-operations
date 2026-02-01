@@ -35,7 +35,7 @@ class LaborDetailsDto {
     notes?: string;
 }
 
-export class    CreateProjectDto {
+export class CreateProjectDto {
     @IsString()
     @IsNotEmpty()
     @Transform(({ value }) => value?.trim())
@@ -81,7 +81,6 @@ export class    CreateProjectDto {
     @IsDateString()
     expectedEndDate?: string;
 
-    // 💰 قيمة العقد
     @IsNumber()
     @Min(0)
     @IsNotEmpty()
@@ -91,6 +90,12 @@ export class    CreateProjectDto {
     @ValidateNested()
     @Type(() => LaborDetailsDto)
     laborDetails?: LaborDetailsDto;
+
+    // 👇 ده اللي كنت ناقصه
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    laborMonths?: number; // عدد الشهور عند الإنشاء
 
     @IsOptional()
     @IsNumber()
@@ -106,7 +111,6 @@ export class    CreateProjectDto {
     @Transform(({ value }) => value?.trim())
     notes?: string;
 }
-
 export class UpdateProjectDto {
     @IsOptional()
     @IsString()
@@ -159,4 +163,10 @@ export class UpdateLaborCostsDto {
     @ValidateNested()
     @Type(() => LaborDetailsDto)
     laborDetails: LaborDetailsDto;
+
+    // 👇 عدد الشهور للتحديث الجديد
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    numberOfMonths: number;
 }

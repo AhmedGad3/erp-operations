@@ -1,5 +1,3 @@
-// project.schema.ts
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -58,17 +56,17 @@ export class Project {
     contractAmount: number; // قيمة العقد (ثابت)
 
     @Prop({ type: Number, default: 0, min: 0 })
-    totalPaid: number; // المبلغ المدفوع من العقد (يتحدث)
+    totalPaid: number; // المبلغ المدفوع من العقد
 
     @Prop({ type: Number, default: 0, min: 0 })
-    totalInvoiced: number; // مجموع فواتير المواد (للمراجعة فقط)
+    totalInvoiced: number; // مجموع فواتير المواد
 
     // ============ 💸 التكاليف ============
     @Prop({ type: Number, default: 0, min: 0 })
     materialCosts: number;
 
     @Prop({ type: Number, default: 0, min: 0 })
-    laborCosts: number;
+    laborCosts: number; // 👈 التكاليف المتراكمة
 
     @Prop({ type: Number, default: 0, min: 0 })
     equipmentCosts: number;
@@ -79,13 +77,11 @@ export class Project {
     @Prop({ type: Number, default: 0, min: 0 })
     totalCosts: number;
 
-    // ============ تفاصيل العمالة ============
+    // ============ تفاصيل العمالة (Snapshot فقط) ============
     @Prop({
         type: {
             numberOfWorkers: { type: Number, default: 0, min: 0 },
             monthlyCost: { type: Number, default: 0, min: 0 },
-            numberOfMonths: { type: Number, default: 0, min: 0 },
-            totalCost: { type: Number, default: 0, min: 0 },
             notes: String,
         },
         _id: false,
@@ -93,8 +89,6 @@ export class Project {
     laborDetails?: {
         numberOfWorkers: number;
         monthlyCost: number;
-        numberOfMonths: number;
-        totalCost: number;
         notes?: string;
     };
 
@@ -128,11 +122,8 @@ ProjectSchema.index({ clientId: 1, isActive: 1 });
 ProjectSchema.index({ status: 1, isActive: 1 });
 
 // ============ 📊 Virtuals للحسابات ============
-
-// ✅ JSON settings
 ProjectSchema.set('toJSON', { virtuals: true });
 ProjectSchema.set('toObject', { virtuals: true });
-
 
 // الباقي من العقد الأساسي
 ProjectSchema.virtual('contractRemaining').get(function () {

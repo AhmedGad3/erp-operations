@@ -23,56 +23,72 @@ export class ProjectService {
         return I18nContext.current()?.lang || 'ar';
     }
 
-    async createProject (createDto: CreateProjectDto, user: TUser){
+ async createProject(createDto: CreateProjectDto, user: TUser) {
+    const lang = this.getLang();
 
-        const lang = this.getLang();
-
-        const client = await this.clientRepository.findById(createDto.clientId);
-        if(!client || !client.isActive){
-            throw new NotFoundException(this.i18n.translate('clients.errors.notFound', { lang }));
-        } 
-
-        const codeExists = await this.projectRepository.findByCode(createDto.code);
-        if (codeExists) {
-            throw new NotFoundException(this.i18n.translate('projects.errors.codeExists', { lang, args: { code: createDto.code } }));
-        } 
-
-        let laborCosts = 0;
-        let laborDetails = {};
-
-        if(createDto.laborDetails) {
-            laborCosts = createDto.laborDetails.numberOfWorkers * createDto.laborDetails.monthlyCost * createDto.laborDetails.numberOfMonths;
-        laborDetails = {
-            ...createDto.laborDetails,
-            totalCost: laborCosts
-        }
-        }
-
-
-        const otherCosts = createDto.otherCosts || 0;
-
-        const totalCosts = laborCosts + otherCosts;
-        const expectedProfit = createDto.contractAmount - totalCosts;
-
-        const project = await this.projectRepository.create({
-            ...createDto,
-            code: createDto.code.toUpperCase(),
-            clientId: new Types.ObjectId(createDto.clientId),
-            startDate: new Date(createDto.startDate),
-            expectedEndDate: createDto.expectedEndDate
-                ? new Date(createDto.expectedEndDate)
-                : undefined,
-            laborCosts,
-            laborDetails,
-            otherCosts,
-            totalCosts,
-            // expectedProfit,
-            // actualProfit: -totalCosts,
-            createdBy: user._id as Types.ObjectId,
-        });
-
-        return project;
+    const client = await this.clientRepository.findById(createDto.clientId);
+    if (!client || !client.isActive) {
+        throw new NotFoundException(
+            this.i18n.translate('clients.errors.notFound', { lang }),
+        );
     }
+
+    const codeExists = await this.projectRepository.findByCode(createDto.code);
+    if (codeExists) {
+        throw new BadRequestException(
+            this.i18n.translate('projects.errors.codeExists', {
+                lang,
+                args: { code: createDto.code },
+            }),
+        );
+    }
+
+    // ===== snapshot العمالة =====
+    let laborDetails: {
+        numberOfWorkers: number;
+        monthlyCost: number;
+        notes?: string;
+    } | undefined = undefined; // 👈 undefined لو مفيش بيانات
+
+    let laborCosts = 0;
+
+    if (createDto.laborDetails) {
+        laborDetails = {
+            numberOfWorkers: createDto.laborDetails.numberOfWorkers,
+            monthlyCost: createDto.laborDetails.monthlyCost,
+            notes: createDto.laborDetails.notes,
+        };
+
+        const months = createDto.laborMonths || 0;
+        
+        // حساب التكلفة الفعلية للعمالة عند الإنشاء
+        laborCosts =
+            createDto.laborDetails.numberOfWorkers *
+            createDto.laborDetails.monthlyCost *
+            months;
+    }
+
+    const otherCosts = createDto.otherCosts || 0;
+    const totalCosts = laborCosts + otherCosts;
+
+    const project = await this.projectRepository.create({
+        ...createDto,
+        code: createDto.code.toUpperCase(),
+        clientId: new Types.ObjectId(createDto.clientId),
+        startDate: new Date(createDto.startDate),
+        expectedEndDate: createDto.expectedEndDate
+            ? new Date(createDto.expectedEndDate)
+            : undefined,
+        laborDetails,  // snapshot فقط
+        laborCosts,    // التراكمي
+        otherCosts,
+        totalCosts,
+        createdBy: user._id as Types.ObjectId,
+    });
+
+    return project;
+}
+
 
 
       async findAll(): Promise<TProject[] | null> {
@@ -145,46 +161,47 @@ async updateProject(
 }
 
  async updateEquipmentCosts(
-        id: string,
-        dto: UpdateEquipmentCostsDto,
-        user: TUser,
-    ): Promise<TProject> {
-        const lang = this.getLang();
+    id: string,
+    dto: UpdateEquipmentCostsDto,
+    user: TUser,
+): Promise<TProject> {
+    const lang = this.getLang();
 
-        if (!Types.ObjectId.isValid(id)) {
-            throw new BadRequestException(
-                this.i18n.translate('projects.errors.invalidId', { lang }),
-            );
-        }
-
-        const project = await this.projectRepository.findById(id);
-        if (!project || !project.isActive) {
-            throw new NotFoundException(
-                this.i18n.translate('projects.errors.notFound', { lang }),
-            );
-        }
-
-        // Update equipment costs
-        project.equipmentCosts += dto.amount;
-
-        // Recalculate total costs
-        project.totalCosts =
-            project.materialCosts +
-            project.laborCosts +
-            project.equipmentCosts +
-            project.otherCosts;
-
-        // Update notes if provided
-       if (dto.notes) {
-    project.notes = project.notes ? project.notes + ' | ' + dto.notes : dto.notes;
-}
-
-        project.updatedBy = user._id as Types.ObjectId;
-
-        return project.save();
+    if (!Types.ObjectId.isValid(id)) {
+        throw new BadRequestException(
+            this.i18n.translate('projects.errors.invalidId', { lang }),
+        );
     }
 
- async updateLaborCosts(
+    const project = await this.projectRepository.findById(id);
+    if (!project || !project.isActive) {
+        throw new NotFoundException(
+            this.i18n.translate('projects.errors.notFound', { lang }),
+        );
+    }
+
+    // ✅ overwrite مش +=
+    project.equipmentCosts = dto.amount;
+
+    project.totalCosts =
+        project.materialCosts +
+        project.laborCosts +
+        project.equipmentCosts +
+        project.otherCosts;
+
+    if (dto.notes) {
+        project.notes = project.notes
+            ? project.notes + ' | ' + dto.notes
+            : dto.notes;
+    }
+
+    project.updatedBy = user._id as Types.ObjectId;
+
+    return project.save();
+}
+
+
+async updateLaborCosts(
     id: string,
     dto: UpdateLaborCostsDto,
     user: TUser,
@@ -204,33 +221,23 @@ async updateProject(
         );
     }
 
-    // Initialize laborDetails if null
-    if (!project.laborDetails) {
-        project.laborDetails = {
-            numberOfWorkers: 0,
-            monthlyCost: 0,
-            numberOfMonths: 0,
-            totalCost: 0,
-        };
-    }
-if (dto.laborDetails.notes) {
-    project.laborDetails.notes = project.laborDetails.notes ? project.laborDetails.notes + ' | ' + dto.laborDetails.notes : dto.laborDetails.notes;
-}
-    // Add new values to existing ones
-    project.laborDetails.numberOfWorkers += dto.laborDetails.numberOfWorkers;
-    project.laborDetails.monthlyCost += dto.laborDetails.monthlyCost;
-    project.laborDetails.numberOfMonths += dto.laborDetails.numberOfMonths;
+    // ===== حساب التكلفة الجديدة (اللي هنضيفها) =====
+    const addedLaborCost =
+        dto.laborDetails.numberOfWorkers *
+        dto.laborDetails.monthlyCost *
+        dto.numberOfMonths; // 👈 من الـ DTO
 
-    // Recalculate total cost for labor
-    const addedLaborCost = dto.laborDetails.numberOfWorkers *
-                            dto.laborDetails.monthlyCost *
-                            dto.laborDetails.numberOfMonths;
-    project.laborDetails.totalCost += addedLaborCost;
-
-    // Update laborCosts in project
+    // ===== تحديث تراكمي =====
     project.laborCosts += addedLaborCost;
 
-    // Recalculate total project costs
+    // ===== تحديث الـ snapshot بآخر أرقام =====
+    project.laborDetails = {
+        numberOfWorkers: dto.laborDetails.numberOfWorkers, // 👈 آخر عدد
+        monthlyCost: dto.laborDetails.monthlyCost,
+        notes: dto.laborDetails.notes,
+    };
+
+    // ===== إعادة حساب التكلفة الإجمالية =====
     project.totalCosts =
         project.materialCosts +
         project.laborCosts +
@@ -241,6 +248,8 @@ if (dto.laborDetails.notes) {
 
     return project.save();
 }
+
+
 
 
 async deleteProject(id: string, user: TUser): Promise<TProject> {
