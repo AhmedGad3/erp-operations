@@ -28,7 +28,8 @@ export class SupplierTransaction {
 
     @Prop({ type: Number, default: 0, min: 0 })
     credit: number;
-
+@Prop({ type: Number, default: 0, min: 0 })
+    discountAmount: number;
     @Prop({ type: Number, required: true })
     balanceAfter: number;
 
