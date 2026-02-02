@@ -223,16 +223,16 @@ async updateLaborCosts(
 
     // ===== حساب التكلفة الجديدة (اللي هنضيفها) =====
     const addedLaborCost =
-    dto.laborDetails.numberOfWorkers *
-    dto.laborDetails.monthlyCost *
-    dto.laborDetails.numberOfMonths;
+        dto.laborDetails.numberOfWorkers *
+        dto.laborDetails.monthlyCost *
+        dto.numberOfMonths; // 👈 من برة مش من جوة laborDetails
 
     // ===== تحديث تراكمي =====
     project.laborCosts += addedLaborCost;
 
     // ===== تحديث الـ snapshot بآخر أرقام =====
     project.laborDetails = {
-        numberOfWorkers: dto.laborDetails.numberOfWorkers, // 👈 آخر عدد
+        numberOfWorkers: dto.laborDetails.numberOfWorkers,
         monthlyCost: dto.laborDetails.monthlyCost,
         notes: dto.laborDetails.notes,
     };
