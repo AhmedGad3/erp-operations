@@ -25,9 +25,9 @@ class LaborDetailsDto {
     @Min(0)
     monthlyCost: number;
 
-    @IsNumber()
-    @Min(0)
-    numberOfMonths: number;
+    // @IsNumber()
+    // @Min(0)
+    // numberOfMonths: number;
 
     @IsOptional()
     @IsString()
