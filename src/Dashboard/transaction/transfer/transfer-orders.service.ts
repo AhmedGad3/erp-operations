@@ -189,7 +189,7 @@ export class MaterialIssueService {
         return this.materialIssueModel
             .find()
             .sort({ issueDate: -1 })
-            .populate('projectId', 'nameAr nameEn code')
+            .populate('projectId', 'nameAr nameEn code contractRemaining expectedProfit realizedProfit completionPercentage profitMargin realizedProfitMargin')
             .populate('clientId', 'nameAr nameEn')
             .populate('items.materialId', 'nameAr nameEn code')
             .populate('createdBy', 'name')
