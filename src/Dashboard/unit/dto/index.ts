@@ -3,8 +3,6 @@ import { Transform } from "class-transformer";
 import { IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateIf } from "class-validator";
 import { UnitCategory } from "../../../Common/Enums";
 
-
-
 export class CreateUnitDto {
   @IsString()
   @IsNotEmpty()
@@ -50,14 +48,54 @@ export class CreateUnitDto {
   isBase?: boolean;
 }
 
-export class UpdateUnitDto extends PartialType(
-  OmitType(CreateUnitDto, ['isBase', 'baseUnitId', 'category'] as const),
-) {
+export class UpdateUnitDto extends PartialType(CreateUnitDto) {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-}
+  
+  // Override to make these optional in updates
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  nameAr?: string;
 
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  nameEn?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.toUpperCase().trim())
+  code?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  symbol?: string;
+
+  @IsEnum(UnitCategory)
+  @IsOptional()
+  category?: UnitCategory;
+
+  @IsBoolean()
+  @IsOptional()
+  isBase?: boolean;
+
+  @IsMongoId({ message: 'baseUnitId must be a valid MongoDB ID' })
+  @IsOptional()
+  baseUnitId?: string;
+
+  @IsNumber()
+  @Min(0.000001)
+  @IsOptional()
+  conversionFactor?: number;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value?.trim())
+  description?: string;
+}
 
 export class ConvertUnitDto {
   @IsNumber()
