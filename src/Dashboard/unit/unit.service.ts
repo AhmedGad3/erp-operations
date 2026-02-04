@@ -184,6 +184,7 @@ async updateUnit(
   
   const unit = await this.findById(id);
 
+  // Check for duplicate names
   if (updateUnitDto.nameAr || updateUnitDto.nameEn) {
     const duplicate = await this.unitRepository.findOne({
       _id: { $ne: id },
@@ -200,6 +201,7 @@ async updateUnit(
     }
   }
 
+  // Check for duplicate code
   if (updateUnitDto.code && updateUnitDto.code !== unit.code) {
     const codeExists = await this.unitRepository.findByCode(updateUnitDto.code);
     
@@ -213,6 +215,133 @@ async updateUnit(
     }
   }
 
+  // Handle base unit logic
+  if (updateUnitDto.isBase !== undefined) {
+    const category = updateUnitDto.category || unit.category;
+    
+    if (updateUnitDto.isBase) {
+      // Check if another base unit exists in the same category
+      const existingBase = await this.unitRepository.findOne({
+        _id: { $ne: id }, // Exclude current unit
+        category: category,
+        isBase: true,
+      });
+
+      if (existingBase) {
+        throw new ConflictException(
+          this.i18n.translate('units.errors.categoryHasBase', {
+            lang,
+            args: {
+              category: category,
+              unit: existingBase.nameAr,
+            },
+          })
+        );
+      }
+
+      // If converting to base unit, clear base unit reference and set conversion factor to 1
+      updateUnitDto.conversionFactor = 1;
+      updateUnitDto.baseUnitId = undefined;
+    } else {
+      // If converting from base to derived, validate base unit requirements
+      if (!updateUnitDto.baseUnitId && !unit.baseUnitId) {
+        throw new BadRequestException(
+          this.i18n.translate('units.errors.baseUnitRequired', { lang })
+        );
+      }
+
+      const baseUnitId = updateUnitDto.baseUnitId || unit.baseUnitId;
+      const baseUnit = await this.unitRepository.findById(baseUnitId.toString());
+      
+      if (!baseUnit) {
+        throw new NotFoundException(
+          this.i18n.translate('units.errors.baseUnitNotFound', { lang })
+        );
+      }
+
+      if (!baseUnit.isBase) {
+        throw new BadRequestException(
+          this.i18n.translate('units.errors.mustBeBaseUnit', { lang })
+        );
+      }
+
+      if (baseUnit.category !== category) {
+        throw new BadRequestException(
+          this.i18n.translate('units.errors.differentCategory', { lang })
+        );
+      }
+
+      const conversionFactor = updateUnitDto.conversionFactor || unit.conversionFactor;
+      if (!conversionFactor || conversionFactor <= 0) {
+        throw new BadRequestException(
+          this.i18n.translate('units.errors.conversionFactorRequired', { lang })
+        );
+      }
+    }
+  }
+
+  // Handle category change
+  if (updateUnitDto.category && updateUnitDto.category !== unit.category) {
+    const isBase = updateUnitDto.isBase !== undefined ? updateUnitDto.isBase : unit.isBase;
+    
+    if (isBase) {
+      // Check if new category already has a base unit
+      const existingBase = await this.unitRepository.findOne({
+        _id: { $ne: id },
+        category: updateUnitDto.category,
+        isBase: true,
+      });
+
+      if (existingBase) {
+        throw new ConflictException(
+          this.i18n.translate('units.errors.categoryHasBase', {
+            lang,
+            args: {
+              category: updateUnitDto.category,
+              unit: existingBase.nameAr,
+            },
+          })
+        );
+      }
+    } else {
+      // If it's a derived unit, make sure the base unit matches the new category
+      const baseUnitId = updateUnitDto.baseUnitId || unit.baseUnitId;
+      if (baseUnitId) {
+        const baseUnit = await this.unitRepository.findById(baseUnitId.toString());
+        if (baseUnit && baseUnit.category !== updateUnitDto.category) {
+          throw new BadRequestException(
+            this.i18n.translate('units.errors.differentCategory', { lang })
+          );
+        }
+      }
+    }
+  }
+
+  // Handle base unit change for derived units
+  if (updateUnitDto.baseUnitId && updateUnitDto.baseUnitId !== unit.baseUnitId?.toString()) {
+    const baseUnit = await this.unitRepository.findById(updateUnitDto.baseUnitId);
+    
+    if (!baseUnit) {
+      throw new NotFoundException(
+        this.i18n.translate('units.errors.baseUnitNotFound', { lang })
+      );
+    }
+
+    if (!baseUnit.isBase) {
+      throw new BadRequestException(
+        this.i18n.translate('units.errors.mustBeBaseUnit', { lang })
+      );
+    }
+
+    const category = updateUnitDto.category || unit.category;
+    if (baseUnit.category !== category) {
+      throw new BadRequestException(
+        this.i18n.translate('units.errors.differentCategory', { lang })
+      );
+    }
+  }
+
+  // Apply updates
   Object.assign(unit, updateUnitDto);
   unit.updatedBy = userId;  
 

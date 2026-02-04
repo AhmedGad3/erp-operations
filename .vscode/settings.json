@@ -1,3 +1,28 @@
 {
-  "cSpell.words": ["المستلزم", "بالفعل", "ساعة", "موجود"]
+  "cSpell.words": [
+    "المستلزم",
+    "بالفعل",
+    "ساعة",
+    "موجود"
+  ],
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#005aa8",
+    "activityBar.background": "#005aa8",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#ff40a6",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#005aa8",
+    "statusBar.background": "#003f75",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#005aa8",
+    "statusBarItem.remoteBackground": "#003f75",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#003f75",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#003f7599",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#003f75"
 }
