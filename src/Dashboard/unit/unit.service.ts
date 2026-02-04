@@ -60,7 +60,7 @@ export class UnitService {
           lang,
           args: {
             category: createUnitDto.category,
-            unit: existingBase.nameAr,
+            unit: lang === 'ar' ? existingBase.nameAr : existingBase.nameEn,
           },
         })
       );
