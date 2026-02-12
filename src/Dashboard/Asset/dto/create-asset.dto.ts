@@ -1,5 +1,6 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional, MaxLength, IsNumber, Min, IsDate } from 'class-validator';
 import { AssetStatus } from '../../../DB/Models/Asset/asset.schema';
+import { Type } from 'class-transformer';
 
 export class CreateAssetDto {
     @IsString()
@@ -28,8 +29,8 @@ export class CreateAssetDto {
     assetTypeEn: string;
 
 
-    @IsDate()
-    
+    @Type(() => Date)
+@IsDate()
     purchaseDate: Date;
 
 
