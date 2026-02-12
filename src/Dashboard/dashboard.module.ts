@@ -7,10 +7,11 @@ import { TransactionModule } from './transaction/transaction.module';
 import { ClientModule } from './client/client.module';
 import { ProjectModule } from './project/project.module';
 import { ReportsModule } from './reports/reports.module';
+import { AssetModule } from './Asset/asset.module';
 
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
-    SupplierModule, ClientModule, ProjectModule, ReportsModule],
+    SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule],
   controllers: [],
   providers: [],
 })
