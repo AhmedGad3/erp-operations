@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, MaxLength, IsNumber, Min, IsDate } from 'class-validator';
 import { AssetStatus } from '../../../DB/Models/Asset/asset.schema';
 
 export class CreateAssetDto {
@@ -26,6 +26,16 @@ export class CreateAssetDto {
     @IsNotEmpty()
     @MaxLength(100)
     assetTypeEn: string;
+
+
+    @IsDate()
+    
+    purchaseDate: Date;
+
+
+    @IsNumber()
+    @Min(0)
+    purchasePrice: number;
 
     @IsEnum(AssetStatus)
     @IsOptional()
