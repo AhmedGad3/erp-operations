@@ -8,10 +8,11 @@ import { ClientModule } from './client/client.module';
 import { ProjectModule } from './project/project.module';
 import { ReportsModule } from './reports/reports.module';
 import { AssetModule } from './Asset/asset.module';
+import { ProjectEquipmentModule } from './project-equipment/project-equipment.module';
 
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
-    SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule],
+    SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule],
   controllers: [],
   providers: [],
 })
