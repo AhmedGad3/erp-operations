@@ -14,15 +14,21 @@ export class ProjectEquipmentRepository extends DBService<TProjectEquipment> {
     }
 
     // ✅ Find by Project ID
-    async findByProjectId(projectId: string | Types.ObjectId): Promise<TProjectEquipment[]> {
-        return this.projectEquipmentModel
-            .find({ projectId })
-            .populate('assetId', 'nameAr nameEn code assetTypeAr assetTypeEn')
-            .populate('createdBy', 'nameAr nameEn email')
-            .populate('updatedBy', 'nameAr nameEn email')
-            .sort({ startDate: -1 })
-            .exec();
-    }
+   async findByProjectId(projectId: string | Types.ObjectId): Promise<TProjectEquipment[]> {
+    const objectId =
+        typeof projectId === 'string'
+            ? new Types.ObjectId(projectId)
+            : projectId;
+
+    return this.projectEquipmentModel
+        .find({ projectId: objectId })
+        .populate('assetId', 'nameAr nameEn code assetTypeAr assetTypeEn')
+        .populate('createdBy', 'nameAr nameEn email')
+        .populate('updatedBy', 'nameAr nameEn email')
+        .sort({ startDate: -1 })
+        .exec();
+}
+
 
     // ✅ Find by Asset ID
     async findByAssetId(assetId: string | Types.ObjectId): Promise<TProjectEquipment[]> {
