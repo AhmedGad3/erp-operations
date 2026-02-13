@@ -23,8 +23,8 @@ export class ProjectEquipmentRepository extends DBService<TProjectEquipment> {
     return this.projectEquipmentModel
         .find({ projectId: objectId })
         .populate('assetId', 'nameAr nameEn code assetTypeAr assetTypeEn')
-        .populate('createdBy', 'nameAr nameEn email')
-        .populate('updatedBy', 'nameAr nameEn email')
+        .populate('createdBy', 'name email')
+        .populate('updatedBy', 'name email')
         .sort({ startDate: -1 })
         .exec();
 }
