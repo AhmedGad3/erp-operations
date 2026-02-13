@@ -34,7 +34,7 @@ export class ProjectEquipmentRepository extends DBService<TProjectEquipment> {
     async findByAssetId(assetId: string | Types.ObjectId): Promise<TProjectEquipment[]> {
         return this.projectEquipmentModel
             .find({ assetId, isActive: true })
-            .populate('projectId', 'nameAr nameEn code')
+            .populate('projectId', 'name code')
             .sort({ startDate: -1 })
             .exec();
     }
@@ -44,9 +44,9 @@ export class ProjectEquipmentRepository extends DBService<TProjectEquipment> {
         return this.projectEquipmentModel
             .findById(id)
             .populate('assetId', 'nameAr nameEn code assetTypeAr assetTypeEn status')
-            .populate('projectId', 'nameAr nameEn code')
-            .populate('createdBy', 'nameAr nameEn email')
-            .populate('updatedBy', 'nameAr nameEn email')
+            .populate('projectId', 'name code')
+            .populate('createdBy', 'name email')
+            .populate('updatedBy', 'name email')
             .exec();
     }
 
