@@ -20,7 +20,7 @@ export class ProjectLaborRepository extends DBService<TProjectLabor> {
                     ? new Types.ObjectId(projectId)
                     : projectId;
         return this.projectLaborModel
-            .find({ projectId })
+            .find({ projectId: objectId })
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
             .sort({ startDate: -1 })

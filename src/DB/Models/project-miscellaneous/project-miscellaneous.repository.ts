@@ -20,7 +20,7 @@ export class ProjectMiscellaneousRepository extends DBService<TProjectMiscellane
                     ? new Types.ObjectId(projectId)
                     : projectId;
         return this.projectMiscellaneousModel
-            .find({ projectId })
+            .find({ projectId: objectId })
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
             .sort({ date: -1 })
