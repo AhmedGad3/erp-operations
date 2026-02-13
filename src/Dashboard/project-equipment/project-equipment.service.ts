@@ -12,7 +12,7 @@ import { TUser } from '../../DB';
 import { ProjectRepository } from '../../DB/Models/Project/project.repository';
 import { ProjectEquipmentRepository } from 'src/DB/Models/Project-Equipment/project-equipment.repository';
 import { AssetRepository } from 'src/DB/Models/Asset/asset.repository';
-import { EquipmentSource, TProjectEquipment } from 'src/DB/Models/Project-Equipment/project-equipment.schema';
+import { TProjectEquipment, EquipmentSource } from 'src/DB/Models/Project-Equipment/project-equipment.schema';
 
 @Injectable()
 export class ProjectEquipmentService {
@@ -170,8 +170,6 @@ export class ProjectEquipmentService {
         updateDto: UpdateProjectEquipmentDto,
         user: TUser,
     ): Promise<TProjectEquipment> {
-        const lang = this.getLang();
-
         const equipment = await this.getEquipmentById(id);
 
         // Recalculate costs if needed
@@ -206,7 +204,10 @@ export class ProjectEquipmentService {
         await equipment.save();
 
         // Update project equipmentCosts
-        await this.updateProjectEquipmentCosts(equipment.projectId.toString());
+        const projectId = equipment.projectId instanceof Types.ObjectId 
+            ? equipment.projectId.toString() 
+            : equipment.projectId;
+        await this.updateProjectEquipmentCosts(projectId);
 
         return equipment;
     }
@@ -238,7 +239,10 @@ export class ProjectEquipmentService {
         );
 
         // Update project equipmentCosts
-        await this.updateProjectEquipmentCosts(equipment.projectId.toString());
+        const projectId = equipment.projectId instanceof Types.ObjectId 
+            ? equipment.projectId.toString() 
+            : equipment.projectId;
+        await this.updateProjectEquipmentCosts(projectId);
 
         return result!;
     }
@@ -265,21 +269,19 @@ export class ProjectEquipmentService {
     }
 
     // ✅ Update Project Equipment Costs
-   private async updateProjectEquipmentCosts(projectId: string): Promise<void> {
-    const totalCost = await this.projectEquipmentRepository.calculateTotalCostByProject(projectId);
-    
-    const project = await this.projectRepository.findById(projectId);
-    if (!project) return;
-
-    project.equipmentCosts = totalCost;
-    
-    // Recalculate total costs
-    project.totalCosts =
-        project.materialCosts +
-        project.laborCosts +
-        project.equipmentCosts +
-        project.otherCosts;
-
-    await project.save();
-}
+    private async updateProjectEquipmentCosts(projectId: string | Types.ObjectId): Promise<void> {
+        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+        const totalCost = await this.projectEquipmentRepository.calculateTotalCostByProject(id);
+        
+        const project = await this.projectRepository.findById(id);
+        if (project) {
+            project.equipmentCosts = totalCost;
+            project.totalCosts =
+                project.materialCosts +
+                project.laborCosts +
+                totalCost +
+                project.otherCosts;
+            await project.save();
+        }
+    }
 }

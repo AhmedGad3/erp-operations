@@ -107,13 +107,13 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Delete Equipment
-    @Delete(':id')
-    async deleteEquipment(@Param('id') id: string, @Req() req: Request) {
-        const lang = this.getLang();
-        const result = await this.projectEquipmentService.deleteEquipment(id, req['user']);
-        return {
-            result,
-            message: this.i18n.translate('projectEquipment.deleted', { lang }),
-        };
-    }
+    // @Delete(':id')
+    // async deleteEquipment(@Param('id') id: string, @Req() req: Request) {
+    //     const lang = this.getLang();
+    //     const result = await this.projectEquipmentService.deleteEquipment(id, req['user']);
+    //     return {
+    //         result,
+    //         message: this.i18n.translate('projectEquipment.deleted', { lang }),
+    //     };
+    // }
 }

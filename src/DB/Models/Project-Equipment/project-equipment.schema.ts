@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { Project } from '../Project/project.schema';
 
 export enum EquipmentSource {
     COMPANY_ASSET = 'COMPANY_ASSET', // من عندنا
@@ -9,7 +10,7 @@ export enum EquipmentSource {
 @Schema({ timestamps: true, collection: 'project_equipment' })
 export class ProjectEquipment {
     @Prop({ type: Types.ObjectId, ref: 'Project', required: true, index: true })
-    projectId: Types.ObjectId;
+    projectId: Types.ObjectId ;
 
     @Prop({
         type: String,
