@@ -15,6 +15,10 @@ export class ProjectMiscellaneousRepository extends DBService<TProjectMiscellane
 
     // ✅ Find by Project ID
     async findByProjectId(projectId: string | Types.ObjectId): Promise<TProjectMiscellaneous[]> {
+         const objectId =
+                typeof projectId === 'string'
+                    ? new Types.ObjectId(projectId)
+                    : projectId;
         return this.projectMiscellaneousModel
             .find({ projectId })
             .populate('createdBy', 'name email')
