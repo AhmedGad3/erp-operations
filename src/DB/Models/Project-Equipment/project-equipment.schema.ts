@@ -16,7 +16,7 @@ export class ProjectEquipment {
         type: String,
         enum: Object.values(EquipmentSource),
         required: true,
-        index: true,
+       
     })
     equipmentSource: EquipmentSource;
 
