@@ -9,10 +9,12 @@ import { ProjectModule } from './project/project.module';
 import { ReportsModule } from './reports/reports.module';
 import { AssetModule } from './Asset/asset.module';
 import { ProjectEquipmentModule } from './project-equipment/project-equipment.module';
+import { ProjectLabor } from 'src/DB/Models/ProjectLabor/project-labor.schema';
+import { ProjectMiscellaneousModule } from './project-miscellaneous/project-miscellaneous.module';
 
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
-    SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule],
+  SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule, ProjectLabor, ProjectMiscellaneousModule],
   controllers: [],
   providers: [],
 })

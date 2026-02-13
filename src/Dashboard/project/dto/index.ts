@@ -9,31 +9,10 @@ import {
     Length,
     Matches,
     Min,
-    ValidateNested,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { Types } from 'mongoose';
 import { ProjectStatus } from '../../../DB/Models/Project/project.schema';
-import { OmitType, PartialType } from '@nestjs/mapped-types';
-
-class LaborDetailsDto {
-    @IsNumber()
-    @Min(0)
-    numberOfWorkers: number;
-
-    @IsNumber()
-    @Min(0)
-    monthlyCost: number;
-
-    // @IsNumber()
-    // @Min(0)
-    // numberOfMonths: number;
-
-    @IsOptional()
-    @IsString()
-    @Transform(({ value }) => value?.trim())
-    notes?: string;
-}
 
 export class CreateProjectDto {
     @IsString()
@@ -87,22 +66,6 @@ export class CreateProjectDto {
     contractAmount: number;
 
     @IsOptional()
-    @ValidateNested()
-    @Type(() => LaborDetailsDto)
-    laborDetails?: LaborDetailsDto;
-
-    // 👇 ده اللي كنت ناقصه
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    laborMonths?: number; // عدد الشهور عند الإنشاء
-
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    otherCosts?: number;
-
-    @IsOptional()
     @IsEnum(ProjectStatus)
     status?: ProjectStatus;
 
@@ -111,6 +74,8 @@ export class CreateProjectDto {
     @Transform(({ value }) => value?.trim())
     notes?: string;
 }
+
+
 export class UpdateProjectDto {
     @IsOptional()
     @IsString()
@@ -122,7 +87,7 @@ export class UpdateProjectDto {
     @Transform(({ value }) => value?.trim())
     nameEn?: string;
 
-     @IsOptional()
+    @IsOptional()
     @IsString()
     @Transform(({ value }) => value?.trim())
     projectManager?: string;
@@ -132,7 +97,7 @@ export class UpdateProjectDto {
     @Transform(({ value }) => value?.trim())
     siteEngineer?: string;
 
-     @IsOptional()
+    @IsOptional()
     @IsEnum(ProjectStatus)
     status?: ProjectStatus;
 
@@ -140,33 +105,4 @@ export class UpdateProjectDto {
     @IsString()
     @Transform(({ value }) => value?.trim())
     notes?: string;
-
-}
-
-export class UpdateEquipmentCostsDto {
-    @IsNumber()
-    @Min(0)
-    @IsNotEmpty()
-    amount: number;
-
-    @IsOptional()
-    @IsString()
-    notes?: string;
-}
-
-// dto/update-labor-costs.dto.ts
-
-
-
-export class UpdateLaborCostsDto {
-    @IsNotEmpty()
-    @ValidateNested()
-    @Type(() => LaborDetailsDto)
-    laborDetails: LaborDetailsDto;
-
-    // 👇 عدد الشهور للتحديث الجديد
-    @IsNumber()
-    @Min(0)
-    @IsNotEmpty()
-    numberOfMonths: number;
 }

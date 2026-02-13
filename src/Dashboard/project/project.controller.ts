@@ -2,29 +2,28 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } fr
 import { Auth } from "../../Common";
 import { ProjectService } from "./project.service";
 import { I18nContext, I18nService } from "nestjs-i18n";
-import { CreateProjectDto, UpdateEquipmentCostsDto, UpdateLaborCostsDto, UpdateProjectDto } from "./dto";
-
+import { CreateProjectDto, UpdateProjectDto } from "./dto";
 
 @Auth('admin')
 @Controller('admin/projects')
 export class ProjectController {
-constructor(
-    private readonly projectService: ProjectService,
-    private readonly i18n: I18nService
-){}
+    constructor(
+        private readonly projectService: ProjectService,
+        private readonly i18n: I18nService
+    ){}
 
-private getLang(): string {
-         return I18nContext.current()?.lang || 'ar';
-     }
+    private getLang(): string {
+        return I18nContext.current()?.lang || 'ar';
+    }
 
-     @Post()
-     async createProject(@Body() createDto: CreateProjectDto, @Req() req:Request){
+    @Post()
+    async createProject(@Body() createDto: CreateProjectDto, @Req() req:Request){
         const lang = this.getLang();
         const result = await this.projectService.createProject(createDto, req['user']);
         return { result, message: this.i18n.translate('projects.created', { lang }) };
-     }
+    }
 
-      @Get()
+    @Get()
     async findAllProjects() {
         const lang = this.getLang();
         const result = await this.projectService.findAll();
@@ -34,7 +33,7 @@ private getLang(): string {
         };
     }
 
-     @Get('search')
+    @Get('search')
     async searchProjects(@Query('q') searchTerm: string) {
         const lang = this.getLang();
         const result = await this.projectService.searchProjects(searchTerm);
@@ -44,7 +43,7 @@ private getLang(): string {
         };
     }
 
-     @Get('status/:status')
+    @Get('status/:status')
     async findByStatus(@Param('status') status: string) {
         const lang = this.getLang();
         const result = await this.projectService.findByStatus(status);
@@ -55,16 +54,16 @@ private getLang(): string {
     }
 
     @Get('client/:clientId/stats')
-       async getClientStats(@Param('clientId') clientId: string) {
-           const lang = this.getLang();
-           const result = await this.projectService.getClientStats(clientId);
-           return {
-               result,
-               message: this.i18n.translate('projects.statsFetched', { lang }),
-           };
-       }
+    async getClientStats(@Param('clientId') clientId: string) {
+        const lang = this.getLang();
+        const result = await this.projectService.getClientStats(clientId);
+        return {
+            result,
+            message: this.i18n.translate('projects.statsFetched', { lang }),
+        };
+    }
 
-     @Get('client/:clientId')
+    @Get('client/:clientId')
     async findByClient(@Param('clientId') clientId: string) {
         const lang = this.getLang();
         const result = await this.projectService.findByClient(clientId);
@@ -73,10 +72,6 @@ private getLang(): string {
             message: this.i18n.translate('projects.fetched', { lang }),
         };
     }
-
-   
-
-   
 
     @Get(':id/stats')
     async getProjectStats(@Param('id') id: string) {
@@ -98,7 +93,7 @@ private getLang(): string {
         };
     }
 
-     @Put(':id')
+    @Put(':id')
     async updateProject(
         @Param('id') id: string,
         @Body() updateDto: UpdateProjectDto,
@@ -115,49 +110,12 @@ private getLang(): string {
             message: this.i18n.translate('projects.updated', { lang }),
         };
     }
- @Patch(':id/equipment-costs/add')
-    async addEquipmentCosts(
-        @Param('id') id: string,
-        @Body() dto: UpdateEquipmentCostsDto,
-        @Req() req: Request,
-    ) {
-        const lang = this.getLang();
-        const result = await this.projectService.updateEquipmentCosts(
-            id,
-            dto,
-            req['user'],
-        );
-        return {
-            result,
-            message: this.i18n.translate('projects.equipmentCostsUpdated', { lang }),
-        };
-    }
-
-
-    @Patch(':id/labor-costs')
-    async updateLaborCosts(
-        @Param('id') id: string,
-        @Body() dto: UpdateLaborCostsDto,
-        @Req() req: Request,
-    ) {
-        const lang = this.getLang();
-        const result = await this.projectService.updateLaborCosts(
-            id,
-            dto,
-            req['user'],
-        );
-        return {
-            result,
-            message: this.i18n.translate('projects.laborCostsUpdated', { lang }),
-        };
-    }
 
     @Delete(':id')
     async deleteProject(@Param('id') id: string, @Req() req: Request) {
         const lang = this.getLang();
         const result = await this.projectService.deleteProject(id, req['user']);
         return {
-           
             message: this.i18n.translate('projects.deleted', { lang }),
         };
     }

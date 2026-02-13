@@ -17,8 +17,8 @@ export class AssetRepository extends DBService<TAsset> {
   async findById(id: string | Types.ObjectId): Promise<TAsset | null> {
     return this.assetModel
       .findById(id)
-      .populate('createdBy', 'name')
-      .populate('updatedBy', 'name')
+      .populate('createdBy', 'name email')
+      .populate('updatedBy', 'name email')
       .exec();
   }
 

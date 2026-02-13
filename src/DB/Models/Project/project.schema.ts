@@ -63,34 +63,19 @@ export class Project {
 
     // ============ 💸 التكاليف ============
     @Prop({ type: Number, default: 0, min: 0 })
-    materialCosts: number;
+    materialCosts: number; // محسوبة من MaterialIssue
 
     @Prop({ type: Number, default: 0, min: 0 })
-    laborCosts: number; // 👈 التكاليف المتراكمة
+    laborCosts: number; // محسوبة من ProjectLabor
 
     @Prop({ type: Number, default: 0, min: 0 })
-    equipmentCosts: number;
+    equipmentCosts: number; // محسوبة من ProjectEquipment
 
     @Prop({ type: Number, default: 0, min: 0 })
-    otherCosts: number;
+    otherCosts: number; // محسوبة من ProjectMiscellaneous
 
     @Prop({ type: Number, default: 0, min: 0 })
-    totalCosts: number;
-
-    // ============ تفاصيل العمالة (Snapshot فقط) ============
-    @Prop({
-        type: {
-            numberOfWorkers: { type: Number, default: 0, min: 0 },
-            monthlyCost: { type: Number, default: 0, min: 0 },
-            notes: String,
-        },
-        _id: false,
-    })
-    laborDetails?: {
-        numberOfWorkers: number;
-        monthlyCost: number;
-        notes?: string;
-    };
+    totalCosts: number; // مجموع كل التكاليف
 
     // ============ الحالة ============
     @Prop({
@@ -111,7 +96,7 @@ export class Project {
     createdBy: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'User' })
-    updatedBy: Types.ObjectId;
+    updatedBy?: Types.ObjectId;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
