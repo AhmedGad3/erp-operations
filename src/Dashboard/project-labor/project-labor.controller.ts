@@ -140,7 +140,6 @@ export class ProjectLaborController {
         };
     }
 
-    // ✅ Delete Labor
    // ✅ Delete Labor
 @Delete(':id')
 async deleteLabor(@Param('id') id: string, @Req() req: Request) {

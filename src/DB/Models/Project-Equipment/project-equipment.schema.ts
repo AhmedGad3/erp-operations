@@ -9,7 +9,7 @@ export enum EquipmentSource {
 
 @Schema({ timestamps: true, collection: 'project_equipment' })
 export class ProjectEquipment {
-    @Prop({ type: Types.ObjectId, ref: 'Project', required: true, index: true })
+    @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
     projectId: Types.ObjectId ;
 
     @Prop({

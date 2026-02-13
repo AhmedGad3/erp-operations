@@ -3,7 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 
 @Schema({ timestamps: true, collection: 'project_miscellaneous' })
 export class ProjectMiscellaneous {
-    @Prop({ type: Types.ObjectId, ref: 'Project', required: true, index: true })
+    @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
     projectId: Types.ObjectId;
 
     @Prop({ type: Date, required: true, index: true })
