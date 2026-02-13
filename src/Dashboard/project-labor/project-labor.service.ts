@@ -228,10 +228,12 @@ export class ProjectLaborService {
 
     // ✅ Update Project Labor Costs
     // ✅ Update Project Labor Costs
-private async updateProjectLaborCosts(projectId: string): Promise<void> {
-    const totalCost = await this.projectLaborRepository.calculateTotalCostByProject(projectId);
+// في project-labor.service.ts
+private async updateProjectLaborCosts(projectId: string | Types.ObjectId): Promise<void> {
+    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+    const totalCost = await this.projectLaborRepository.calculateTotalCostByProject(id);
     
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.findById(id);
     if (project) {
         project.laborCosts = totalCost;
         project.totalCosts =

@@ -197,18 +197,20 @@ export class ProjectMiscellaneousService {
     }
 
     // ✅ Update Project Miscellaneous Costs
-    private async updateProjectMiscellaneousCosts(projectId: string): Promise<void> {
-        const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(projectId);
-        
-        const project = await this.projectRepository.findById(projectId);
-        if (project) {
-            project.otherCosts = totalCost;
-            project.totalCosts =
-                project.materialCosts +
-                project.laborCosts +
-                project.equipmentCosts +
-                totalCost;
-            await project.save();
-        }
+   // في project-miscellaneous.service.ts
+private async updateProjectMiscellaneousCosts(projectId: string | Types.ObjectId): Promise<void> {
+    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+    const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(id);
+    
+    const project = await this.projectRepository.findById(id);
+    if (project) {
+        project.otherCosts = totalCost;
+        project.totalCosts =
+            project.materialCosts +
+            project.laborCosts +
+            project.equipmentCosts +
+            totalCost;
+        await project.save();
     }
+}
 }
