@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { Project } from '../Project/project.schema';
 
 export enum EquipmentSource {
     COMPANY_ASSET = 'COMPANY_ASSET', // من عندنا

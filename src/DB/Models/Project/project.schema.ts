@@ -82,7 +82,7 @@ export class Project {
         type: String,
         enum: Object.values(ProjectStatus),
         default: ProjectStatus.PLANNED,
-        index: true,
+    
     })
     status: ProjectStatus;
 

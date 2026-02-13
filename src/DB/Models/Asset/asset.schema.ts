@@ -35,7 +35,7 @@ purchasePrice: number;
         type: String,
         enum: Object.values(AssetStatus),
         default: AssetStatus.AVAILABLE,
-        index: true,
+        
     })
     status: AssetStatus;
 
