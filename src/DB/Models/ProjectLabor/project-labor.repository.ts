@@ -38,23 +38,34 @@ export class ProjectLaborRepository extends DBService<TProjectLabor> {
     }
 
     // ✅ Calculate Total Labor Cost for Project
-    async calculateTotalCostByProject(projectId: string | Types.ObjectId): Promise<number> {
-        const result = await this.projectLaborModel.aggregate([
-            { 
-                $match: { 
-                    projectId: new Types.ObjectId(projectId as string),
-                } 
-            },
-            { 
-                $group: { 
-                    _id: null, 
-                    total: { $sum: '$totalCost' } 
-                } 
-            },
-        ]);
+   async calculateTotalCostByProject(
+  projectId: string | Types.ObjectId,
+): Promise<number> {
 
-        return result[0]?.total || 0;
-    }
+  if (!projectId) return 0;
+
+  const objectId =
+    typeof projectId === 'string'
+      ? new Types.ObjectId(projectId)
+      : projectId;
+
+  const result = await this.projectLaborModel.aggregate([
+    {
+      $match: {
+        projectId: objectId,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$totalCost' },
+      },
+    },
+  ]);
+
+  return result[0]?.total || 0;
+}
+
 
     // ✅ Find Labor by Date Range
     async findByDateRange(

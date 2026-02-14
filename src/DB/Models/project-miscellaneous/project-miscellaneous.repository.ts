@@ -38,23 +38,34 @@ export class ProjectMiscellaneousRepository extends DBService<TProjectMiscellane
     }
 
     // ✅ Calculate Total Miscellaneous Cost for Project
-    async calculateTotalCostByProject(projectId: string | Types.ObjectId): Promise<number> {
-        const result = await this.projectMiscellaneousModel.aggregate([
-            { 
-                $match: { 
-                    projectId: new Types.ObjectId(projectId as string),
-                } 
-            },
-            { 
-                $group: { 
-                    _id: null, 
-                    total: { $sum: '$amount' } 
-                } 
-            },
-        ]);
+    async calculateTotalCostByProject(
+  projectId: string | Types.ObjectId,
+): Promise<number> {
 
-        return result[0]?.total || 0;
-    }
+  if (!projectId) return 0;
+
+  const objectId =
+    typeof projectId === 'string'
+      ? new Types.ObjectId(projectId)
+      : projectId;
+
+  const result = await this.projectMiscellaneousModel.aggregate([
+    {
+      $match: {
+        projectId: objectId,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' },
+      },
+    },
+  ]);
+
+  return result[0]?.total || 0;
+}
+
 
     // ✅ Find by Date Range
     async findByDateRange(
