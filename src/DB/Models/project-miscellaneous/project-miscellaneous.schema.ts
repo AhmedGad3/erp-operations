@@ -33,5 +33,4 @@ export type TProjectMiscellaneous = HydratedDocument<ProjectMiscellaneous>;
 
 // ✅ Indexes
 ProjectMiscellaneousSchema.index({ projectId: 1 });
-ProjectMiscellaneousSchema.index({ date: 1 });
 ProjectMiscellaneousSchema.index({ category: 1 });

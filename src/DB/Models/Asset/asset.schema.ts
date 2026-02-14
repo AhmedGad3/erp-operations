@@ -56,5 +56,4 @@ export const AssetSchema = SchemaFactory.createForClass(Asset);
 export type TAsset = HydratedDocument<Asset>;
 
 // ✅ Indexes
-AssetSchema.index({ code: 1 });
 AssetSchema.index({ status: 1, isActive: 1 });
