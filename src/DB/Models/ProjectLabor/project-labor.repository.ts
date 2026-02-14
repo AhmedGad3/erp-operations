@@ -38,40 +38,21 @@ export class ProjectLaborRepository extends DBService<TProjectLabor> {
     }
 
     // ✅ Calculate Total Labor Cost for Project
-  async calculateTotalCostByProject(
-  projectId: string | Types.ObjectId,
-): Promise<number> {
+  async calculateTotalCostByProject(projectId: string | Types.ObjectId): Promise<number> {
+    if (!projectId) return 0;
 
-  if (!projectId) {
-    return 0;
+    if (typeof projectId === 'string' && !Types.ObjectId.isValid(projectId)) return 0;
+
+    const objectId =
+      typeof projectId === 'string' ? new Types.ObjectId(projectId) : projectId;
+
+    const result = await this.projectLaborModel.aggregate([
+      { $match: { projectId: objectId } },
+      { $group: { _id: null, total: { $sum: '$totalCost' } } },
+    ]);
+
+    return result[0]?.total || 0;
   }
-
-  if (
-    typeof projectId === 'string' &&
-    !Types.ObjectId.isValid(projectId)
-  ) {
-    return 0;
-  }
-
-  const objectId =
-    typeof projectId === 'string'
-      ? new Types.ObjectId(projectId)
-      : projectId;
-
-  const result = await this.projectLaborModel.aggregate([
-    {
-      $match: { projectId: objectId },
-    },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: '$totalCost' },
-      },
-    },
-  ]);
-
-  return result[0]?.total || 0;
-}
 
 
 

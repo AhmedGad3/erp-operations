@@ -109,60 +109,57 @@ export class ProjectLaborService {
     }
 
     // ✅ Update Labor
-    async updateLabor(
-        id: string,
-        updateDto: UpdateProjectLaborDto,
-        user: TUser,
-    ): Promise<TProjectLabor> {
-        const labor = await this.getLaborById(id);
-
-        // Recalculate costs if needed
-        const numberOfDays = updateDto.numberOfDays ?? labor.numberOfDays;
-        const dailyRate = updateDto.dailyRate ?? labor.dailyRate;
-        const laborCost = numberOfDays * dailyRate;
-
-        const materialCost = updateDto.materialCost ?? labor.materialCost;
-        const totalCost = laborCost + materialCost;
-
-        const updateData: any = {
-            ...updateDto,
-            laborCost,
-            totalCost,
-            updatedBy: user._id as Types.ObjectId,
-        };
-
-        if (updateDto.startDate) {
-            updateData.startDate = new Date(updateDto.startDate);
-        }
-        if (updateDto.endDate) {
-            updateData.endDate = new Date(updateDto.endDate);
-        }
-        if (updateDto.workerName) {
-            updateData.workerName = updateDto.workerName.trim();
-        }
-        if (updateDto.specialty) {
-            updateData.specialty = updateDto.specialty.trim();
-        }
-        if (updateDto.taskDescription) {
-            updateData.taskDescription = updateDto.taskDescription.trim();
-        }
-        if (updateDto.notes) {
-            updateData.notes = updateDto.notes.trim();
-        }
-
-        Object.assign(labor, updateData);
-        await labor.save();
-
-        // Update project laborCosts
-        if (!labor.projectId || !Types.ObjectId.isValid(labor.projectId.toString())) {
-    throw new Error('Invalid projectId for labor');
-}
-
-await this.updateProjectLaborCosts(labor.projectId);
-
-
-        return labor;
+     async updateLabor(
+    id: string,
+    updateDto: UpdateProjectLaborDto,
+    user: TUser,
+  ): Promise<TProjectLabor> {
+    const labor = await this.projectLaborRepository.findByIdWithPopulate(id);
+    if (!labor) {
+      throw new Error(`Labor with id ${id} not found`);
     }
+
+    // ---------------------------
+    // Recalculate costs if needed
+    // ---------------------------
+    const numberOfDays = updateDto.numberOfDays ?? labor.numberOfDays;
+    const dailyRate = updateDto.dailyRate ?? labor.dailyRate;
+    const laborCost = numberOfDays * dailyRate;
+
+    const materialCost = updateDto.materialCost ?? labor.materialCost;
+    const totalCost = laborCost + materialCost;
+
+    // ---------------------------
+    // Prepare update object
+    // ---------------------------
+    const updateData: any = {
+      ...updateDto,
+      laborCost,
+      totalCost,
+      updatedBy: user._id as Types.ObjectId,
+    };
+
+    if (updateDto.startDate) updateData.startDate = new Date(updateDto.startDate);
+    if (updateDto.endDate) updateData.endDate = new Date(updateDto.endDate);
+    if (updateDto.workerName) updateData.workerName = updateDto.workerName.trim();
+    if (updateDto.specialty) updateData.specialty = updateDto.specialty.trim();
+    if (updateDto.taskDescription) updateData.taskDescription = updateDto.taskDescription.trim();
+    if (updateDto.notes) updateData.notes = updateDto.notes.trim();
+
+    Object.assign(labor, updateData);
+    await labor.save();
+
+    // ---------------------------
+    // Update project labor costs
+    // ---------------------------
+    if (!labor.projectId || !Types.ObjectId.isValid(labor.projectId.toString())) {
+      throw new Error('Invalid projectId for labor');
+    }
+
+    await this.updateProjectLaborCosts(labor.projectId);
+
+    return labor;
+  }
 
     // ✅ Delete Labor
     async deleteLabor(id: string, user: TUser): Promise<TProjectLabor> {
@@ -234,19 +231,20 @@ await this.updateProjectLaborCosts(labor.projectId);
     // ✅ Update Project Labor Costs
     // ✅ Update Project Labor Costs
 // في project-labor.service.ts
-private async updateProjectLaborCosts(projectId: string | Types.ObjectId): Promise<void> {
+ private async updateProjectLaborCosts(projectId: string | Types.ObjectId): Promise<void> {
     const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
     const totalCost = await this.projectLaborRepository.calculateTotalCostByProject(id);
-    
+
     const project = await this.projectRepository.findById(id);
-    if (project) {
-        project.laborCosts = totalCost;
-        project.totalCosts =
-            project.materialCosts +
-            totalCost +
-            project.equipmentCosts +
-            project.otherCosts;
-        await project.save();
-    }
-}
+    if (!project) return;
+
+    project.laborCosts = totalCost;
+    project.totalCosts =
+      (project.materialCosts || 0) +
+      totalCost +
+      (project.equipmentCosts || 0) +
+      (project.otherCosts || 0);
+
+    await project.save();
+  }
 }
