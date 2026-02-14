@@ -154,7 +154,12 @@ export class ProjectLaborService {
         await labor.save();
 
         // Update project laborCosts
-        await this.updateProjectLaborCosts(labor.projectId.toString());
+        if (!labor.projectId || !Types.ObjectId.isValid(labor.projectId.toString())) {
+    throw new Error('Invalid projectId for labor');
+}
+
+await this.updateProjectLaborCosts(labor.projectId);
+
 
         return labor;
     }
