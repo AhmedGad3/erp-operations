@@ -103,7 +103,15 @@ export class ProjectMiscellaneousService {
         updateDto: UpdateProjectMiscellaneousDto,
         user: TUser,
     ): Promise<TProjectMiscellaneous> {
-        const miscellaneous = await this.getMiscellaneousById(id);
+        const lang = this.getLang();
+
+        // Use findById instead of getMiscellaneousById to avoid populated projectId
+        const miscellaneous = await this.projectMiscellaneousRepository.findById(id);
+        if (!miscellaneous) {
+            throw new NotFoundException(
+                this.i18n.translate('projectMiscellaneous.errors.notFound', { lang }),
+            );
+        }
 
         const updateData: any = {
             ...updateDto,
@@ -127,15 +135,30 @@ export class ProjectMiscellaneousService {
         await miscellaneous.save();
 
         // Update project otherCosts
-        await this.updateProjectMiscellaneousCosts(miscellaneous.projectId.toString());
+        const projectId = miscellaneous.projectId instanceof Types.ObjectId 
+            ? miscellaneous.projectId.toString() 
+            : miscellaneous.projectId;
+        
+        await this.updateProjectMiscellaneousCosts(projectId);
 
         return miscellaneous;
     }
 
     // ✅ Delete Miscellaneous
     async deleteMiscellaneous(id: string, user: TUser): Promise<TProjectMiscellaneous> {
-        const miscellaneous = await this.getMiscellaneousById(id);
-        const projectId = miscellaneous.projectId.toString();
+        const lang = this.getLang();
+
+        // Use findById instead of getMiscellaneousById to avoid populated projectId
+        const miscellaneous = await this.projectMiscellaneousRepository.findById(id);
+        if (!miscellaneous) {
+            throw new NotFoundException(
+                this.i18n.translate('projectMiscellaneous.errors.notFound', { lang }),
+            );
+        }
+
+        const projectId = miscellaneous.projectId instanceof Types.ObjectId 
+            ? miscellaneous.projectId.toString() 
+            : miscellaneous.projectId;
 
         // Delete the miscellaneous record
         await this.projectMiscellaneousRepository.delete(id);
@@ -197,20 +220,19 @@ export class ProjectMiscellaneousService {
     }
 
     // ✅ Update Project Miscellaneous Costs
-   // في project-miscellaneous.service.ts
-private async updateProjectMiscellaneousCosts(projectId: string | Types.ObjectId): Promise<void> {
-    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
-    const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(id);
-    
-    const project = await this.projectRepository.findById(id);
-    if (project) {
-        project.otherCosts = totalCost;
-        project.totalCosts =
-            project.materialCosts +
-            project.laborCosts +
-            project.equipmentCosts +
-            totalCost;
-        await project.save();
+    private async updateProjectMiscellaneousCosts(projectId: string | Types.ObjectId): Promise<void> {
+        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+        const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(id);
+        
+        const project = await this.projectRepository.findById(id);
+        if (project) {
+            project.otherCosts = totalCost;
+            project.totalCosts =
+                (project.materialCosts || 0) +
+                (project.laborCosts || 0) +
+                (project.equipmentCosts || 0) +
+                totalCost;
+            await project.save();
+        }
     }
-}
 }
