@@ -233,7 +233,7 @@ export class MaterialIssueService {
         }
 
         return this.materialIssueModel
-            .find({ projectId })
+            .find({  projectId: new Types.ObjectId(projectId)  })
             .sort({ issueDate: -1 })
             .populate('items.materialId', 'nameAr nameEn code')
             .populate('items.unitId', 'nameAr nameEn symbol')
