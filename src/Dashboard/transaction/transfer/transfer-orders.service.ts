@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { MaterialIssue, MaterialIssueDocument } from '../../../DB/Models/Transaction/project/material-issue.schema';
-import { ProjectInvoice, ProjectInvoiceDocument, ProjectInvoiceStatus } from '../../../DB/Models/Transaction/project/project-invoice.schema';
+import { ProjectInvoice, ProjectInvoiceDocument } from '../../../DB/Models/Transaction/project/project-invoice.schema';
 import { Project, TProject } from '../../../DB/Models/Project/project.schema';
 import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
 import { MaterialRepository, TUser } from '../../../DB';
@@ -15,7 +15,6 @@ import { CreateMaterialIssueDto } from './dto/create-material-issue.dto';
 import { StockMovementService } from '../stock/stock-movement.service';
 import { ClientLedgerService } from '../ledger/Client/client-ledger.service';
 import { CounterService } from '../common/counter.service';
-import { log } from 'console';
 
 @Injectable()
 export class MaterialIssueService {
@@ -151,7 +150,7 @@ export class MaterialIssueService {
 
   // 4️⃣ Update project costs
   project.materialCosts += totalCost;
-  project.totalInvoiced += totalPrice; // ✅ إضافة: تحديث إجمالي فواتير المواد
+  project.totalInvoiced += totalPrice; 
   project.totalCosts =
     project.materialCosts +
     project.laborCosts +
@@ -175,9 +174,7 @@ export class MaterialIssueService {
     });
   }
 
-  // ❌ مفيش Ledger
-  // ❌ مفيش Project Invoice
-  // ❌ مفيش Debit على العميل
+ 
 
   return {
     materialIssue,
@@ -189,7 +186,7 @@ export class MaterialIssueService {
         return this.materialIssueModel
             .find()
             .sort({ issueDate: -1 })
-            .populate('projectId', 'nameAr nameEn code contractRemaining expectedProfit realizedProfit completionPercentage profitMargin realizedProfitMargin')
+            .populate('projectId', 'nameAr nameEn code ')
             .populate('clientId', 'nameAr nameEn')
             .populate('items.materialId', 'nameAr nameEn code')
             .populate('createdBy', 'name')
