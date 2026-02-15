@@ -9,13 +9,12 @@ import {
     Req,
 } from '@nestjs/common';
 import { GeneralExpenseService } from './general-expense.service';
-import { TUser } from 'src/DB';
 import { Auth } from 'src/Common';
 import { CreateGeneralExpenseDto, UpdateGeneralExpenseDto } from './dto';
 
 
 @Auth('admin')
-@Controller('general-expenses')
+@Controller('/admin/general-expenses')
 export class GeneralExpenseController {
     constructor(
         private readonly generalExpenseService: GeneralExpenseService
