@@ -11,10 +11,12 @@ import { AssetModule } from './Asset/asset.module';
 import { ProjectEquipmentModule } from './project-equipment/project-equipment.module';
 import { ProjectMiscellaneousModule } from './project-miscellaneous/project-miscellaneous.module';
 import { ProjectLaborModule } from './project-labor/project-labor.module';
+import { GeneralExpenseModule } from './General-Expense/general-expense.module';
 
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
-  SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule, ProjectLaborModule, ProjectMiscellaneousModule],
+  SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule, ProjectLaborModule, ProjectMiscellaneousModule,
+GeneralExpenseModule],
   controllers: [],
   providers: [],
 })
