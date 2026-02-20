@@ -3,8 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class SubcontractorWork {
-    @Prop({ required: true, unique: true })
-    workNo: number;
+
 
     @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
     project: Types.ObjectId;
@@ -63,7 +62,6 @@ SubcontractorWorkSchema.pre('findOneAndUpdate', function (next) {
 });
 
 SubcontractorWorkSchema.index({ project: 1, contractorName: 1 });
-SubcontractorWorkSchema.index({ workNo: 1 });
 SubcontractorWorkSchema.index({ isActive: 1, project: 1 });
 
 SubcontractorWorkSchema.set('toJSON', { virtuals: true });

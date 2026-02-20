@@ -48,13 +48,13 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
             .exec();
     }
 
-    async findByWorkNo(workNo: number): Promise<TSubcontractorWork | null> {
-        return this.workModel
-            .findOne({ workNo })
-            .populate('project', 'name projectNo')
-            .populate('createdBy', 'name email')
-            .exec();
-    }
+    // async findByWorkNo(workNo: number): Promise<TSubcontractorWork | null> {
+    //     return this.workModel
+    //         .findOne({ workNo })
+    //         .populate('project', 'name projectNo')
+    //         .populate('createdBy', 'name email')
+    //         .exec();
+    // }
 
     // ============================================
     // Query by Project
