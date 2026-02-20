@@ -62,7 +62,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
 
     async findByProject(projectId: string | Types.ObjectId): Promise<TSubcontractorWork[]> {
         return this.workModel
-            .find({ project: projectId})
+            .find({ project:  new Types.ObjectId(projectId.toString())})
             .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
             .exec();
