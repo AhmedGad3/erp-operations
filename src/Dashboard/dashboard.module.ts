@@ -16,7 +16,7 @@ import { GeneralExpenseModule } from './General-Expense/general-expense.module';
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
   SupplierModule, ClientModule, ProjectModule, ReportsModule, AssetModule,ProjectEquipmentModule, ProjectLaborModule, ProjectMiscellaneousModule,
-GeneralExpenseModule],
+GeneralExpenseModule, SubcontractorWorkModule],
   controllers: [],
   providers: [],
 })

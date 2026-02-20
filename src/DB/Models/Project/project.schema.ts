@@ -72,7 +72,12 @@ export class Project {
     equipmentCosts: number; // محسوبة من ProjectEquipment
 
     @Prop({ type: Number, default: 0, min: 0 })
+    subcontractorCosts: number;
+
+    @Prop({ type: Number, default: 0, min: 0 })
     otherCosts: number; // محسوبة من ProjectMiscellaneous
+
+
 
     @Prop({ type: Number, default: 0, min: 0 })
     totalCosts: number; // مجموع كل التكاليف
