@@ -138,9 +138,9 @@ const workData = {
         Object.assign(work, updateData);
         await work.save();
 
-        const projectId = work.project instanceof Types.ObjectId
-            ? work.project.toString()
-            : work.project;
+      const projectId = (work.project as any)?._id
+    ? (work.project as any)._id.toString()
+    : work.project.toString();
 
         await this.updateProjectSubcontractorCosts(projectId);
 
