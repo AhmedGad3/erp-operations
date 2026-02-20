@@ -48,12 +48,24 @@ export class SubcontractorWorkService {
     }
 
     const totalAmount = createDto.quantity * createDto.unitPrice;
+const lastWork = await this.subcontractorWorkRepository.findOne(
+  {
+    project: new Types.ObjectId(projectId),
+    isActive: true,
+    workNo: { $type: 'number' } // تجاهل أي NaN أو null أو undefined
+  },
+  { sort: { workNo: -1 } },
+);
 
-    const lastWork = await this.subcontractorWorkRepository.findOne(
-        { project: new Types.ObjectId(projectId), isActive: true },
-        { sort: { workNo: -1 } },
-    );
-    const workNo = lastWork ? lastWork.workNo + 1 : 1; // ✅ تعريف workNo هنا
+const lastWorkNo =
+  lastWork &&
+  typeof lastWork.workNo === 'number' &&
+  !isNaN(lastWork.workNo)
+    ? lastWork.workNo
+    : 0;
+
+const workNo = lastWorkNo + 1;
+
 
     const workData = {
         workNo,
