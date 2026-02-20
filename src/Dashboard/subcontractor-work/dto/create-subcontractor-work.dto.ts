@@ -6,6 +6,7 @@ import {
     IsOptional,
     IsNumber,
     Min,
+    IsDateString,
 } from 'class-validator';
 
 export class CreateSubcontractorWorkDto {
@@ -20,6 +21,10 @@ export class CreateSubcontractorWorkDto {
     @IsString()
     @IsOptional()
     unit?: string;
+
+    @IsDateString()
+@IsNotEmpty()
+workDate: string;
 
     @IsNumber()
     @Min(0)

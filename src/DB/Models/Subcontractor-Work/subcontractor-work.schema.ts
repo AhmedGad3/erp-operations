@@ -14,6 +14,9 @@ export class SubcontractorWork {
     @Prop({ required: true, trim: true })
     itemDescription: string;
 
+    @Prop({ type: Date, required: true })
+workDate: Date;
+
     @Prop({ trim: true })
     unit?: string;
 

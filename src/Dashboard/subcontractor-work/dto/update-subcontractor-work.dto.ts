@@ -5,12 +5,18 @@ import {
     IsOptional,
     IsNumber,
     Min,
+    IsDateString,
+    IsNotEmpty,
 } from 'class-validator';
 
 export class UpdateSubcontractorWorkDto {
     @IsString()
     @IsOptional()
     contractorName?: string;
+
+    @IsDateString()
+    @IsNotEmpty()
+    workDate: string;
 
     @IsString()
     @IsOptional()

@@ -50,6 +50,7 @@ export class SubcontractorWorkService {
         // ✅ لا نحسب totalAmount هنا — pre-save hook في السكيما يتكفل بذلك
         const work = await this.subcontractorWorkRepository.create({
             project: new Types.ObjectId(projectId),
+            workDate: new Date(createDto.workDate),
             contractorName: createDto.contractorName.trim(),
             itemDescription: createDto.itemDescription.trim(),
             unit: createDto.unit?.trim(),
@@ -106,6 +107,7 @@ export class SubcontractorWorkService {
         if (updateDto.notes !== undefined) work.notes = updateDto.notes.trim();
         if (updateDto.quantity !== undefined) work.quantity = updateDto.quantity;
         if (updateDto.unitPrice !== undefined) work.unitPrice = updateDto.unitPrice;
+        if (updateDto.workDate) work.workDate = new Date(updateDto.workDate);
         work.updatedBy = user._id as Types.ObjectId;
 
         await work.save(); // pre-save hook يحسب totalAmount
