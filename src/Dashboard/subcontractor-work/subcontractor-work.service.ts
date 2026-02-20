@@ -1,5 +1,3 @@
-// subcontractor-work.service.ts
-
 import {
     Injectable,
     NotFoundException,
@@ -26,76 +24,60 @@ export class SubcontractorWorkService {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private validateObjectId(id: string, translationKey: string): void {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException(
+                this.i18n.translate(translationKey, { lang: this.getLang() }),
+            );
+        }
+    }
+
     // ✅ Add Work to Project
     async addWorkToProject(
-    projectId: string,
-    createDto: CreateSubcontractorWorkDto,
-    user: TUser,
-): Promise<TSubcontractorWork> {
-    const lang = this.getLang();
+        projectId: string,
+        createDto: CreateSubcontractorWorkDto,
+        user: TUser,
+    ): Promise<TSubcontractorWork> {
+        this.validateObjectId(projectId, 'projects.errors.invalidId');
 
-    if (!Types.ObjectId.isValid(projectId)) {
-        throw new BadRequestException(
-            this.i18n.translate('projects.errors.invalidId', { lang }),
-        );
-    }
-
-    const project = await this.projectRepository.findById(projectId);
-    if (!project) {
-        throw new NotFoundException(
-            this.i18n.translate('projects.errors.notFound', { lang }),
-        );
-    }
-
-    const totalAmount = createDto.quantity * createDto.unitPrice;
-
-
-    const workData = {
-        
-        project: new Types.ObjectId(projectId),
-        contractorName: createDto.contractorName.trim(),
-        itemDescription: createDto.itemDescription.trim(),
-        unit: createDto.unit?.trim(),
-        quantity: createDto.quantity,
-        unitPrice: createDto.unitPrice,
-        totalAmount,
-        notes: createDto.notes?.trim(),
-        createdBy: user._id as Types.ObjectId,
-    };
-
-    const work = await this.subcontractorWorkRepository.create(workData);
-
-    await this.updateProjectSubcontractorCosts(projectId);
-
-    return work;
-}
-    // ✅ Get All Works for Project
-    async getProjectWorks(projectId: string): Promise<TSubcontractorWork[]> {
-        const lang = this.getLang();
-
-        if (!Types.ObjectId.isValid(projectId)) {
-            throw new BadRequestException(
-                this.i18n.translate('projects.errors.invalidId', { lang }),
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang: this.getLang() }),
             );
         }
 
+        // ✅ لا نحسب totalAmount هنا — pre-save hook في السكيما يتكفل بذلك
+        const work = await this.subcontractorWorkRepository.create({
+            project: new Types.ObjectId(projectId),
+            contractorName: createDto.contractorName.trim(),
+            itemDescription: createDto.itemDescription.trim(),
+            unit: createDto.unit?.trim(),
+            quantity: createDto.quantity,
+            unitPrice: createDto.unitPrice,
+            notes: createDto.notes?.trim(),
+            createdBy: user._id as Types.ObjectId,
+        });
+
+        await this.updateProjectSubcontractorCosts(projectId);
+
+        return work;
+    }
+
+    // ✅ Get All Works for Project
+    async getProjectWorks(projectId: string): Promise<TSubcontractorWork[]> {
+        this.validateObjectId(projectId, 'projects.errors.invalidId');
         return this.subcontractorWorkRepository.findByProject(projectId);
     }
 
     // ✅ Get Work by ID
     async getWorkById(id: string): Promise<TSubcontractorWork> {
-        const lang = this.getLang();
-
-        if (!Types.ObjectId.isValid(id)) {
-            throw new BadRequestException(
-                this.i18n.translate('subcontractorWork.errors.invalidId', { lang }),
-            );
-        }
+        this.validateObjectId(id, 'subcontractorWork.errors.invalidId');
 
         const work = await this.subcontractorWorkRepository.findById(id);
         if (!work) {
             throw new NotFoundException(
-                this.i18n.translate('subcontractorWork.errors.notFound', { lang }),
+                this.i18n.translate('subcontractorWork.errors.notFound', { lang: this.getLang() }),
             );
         }
 
@@ -108,56 +90,52 @@ export class SubcontractorWorkService {
         updateDto: UpdateSubcontractorWorkDto,
         user: TUser,
     ): Promise<TSubcontractorWork> {
-        const lang = this.getLang();
+        this.validateObjectId(id, 'subcontractorWork.errors.invalidId');
 
         const work = await this.subcontractorWorkRepository.findById(id);
         if (!work) {
             throw new NotFoundException(
-                this.i18n.translate('subcontractorWork.errors.notFound', { lang }),
+                this.i18n.translate('subcontractorWork.errors.notFound', { lang: this.getLang() }),
             );
         }
 
-        const quantity = updateDto.quantity ?? work.quantity;
-        const unitPrice = updateDto.unitPrice ?? work.unitPrice;
-        const totalAmount = quantity * unitPrice;
+        // ✅ طبّق التعديلات — pre-save hook هيحسب totalAmount تلقائياً
+        if (updateDto.contractorName !== undefined) work.contractorName = updateDto.contractorName.trim();
+        if (updateDto.itemDescription !== undefined) work.itemDescription = updateDto.itemDescription.trim();
+        if (updateDto.unit !== undefined) work.unit = updateDto.unit.trim();
+        if (updateDto.notes !== undefined) work.notes = updateDto.notes.trim();
+        if (updateDto.quantity !== undefined) work.quantity = updateDto.quantity;
+        if (updateDto.unitPrice !== undefined) work.unitPrice = updateDto.unitPrice;
+        work.updatedBy = user._id as Types.ObjectId;
 
-        const updateData: any = {
-            ...updateDto,
-            totalAmount,
-            updatedBy: user._id as Types.ObjectId,
-        };
+        await work.save(); // pre-save hook يحسب totalAmount
 
-        if (updateDto.contractorName) updateData.contractorName = updateDto.contractorName.trim();
-        if (updateDto.itemDescription) updateData.itemDescription = updateDto.itemDescription.trim();
-        if (updateDto.unit) updateData.unit = updateDto.unit.trim();
-        if (updateDto.notes) updateData.notes = updateDto.notes.trim();
-
-        Object.assign(work, updateData);
-        await work.save();
-
-      const projectId = (work.project as any)?._id
-    ? (work.project as any)._id.toString()
-    : work.project.toString();
-
+        // ✅ استخرج projectId بشكل آمن
+        const projectId = (work.project as any)?._id?.toString() ?? work.project.toString();
         await this.updateProjectSubcontractorCosts(projectId);
 
         return work;
     }
 
-    // ✅ Delete Work
+    // ✅ Delete Work (Soft Delete)
     async deleteWork(id: string, user: TUser): Promise<TSubcontractorWork> {
-        const lang = this.getLang();
+        this.validateObjectId(id, 'subcontractorWork.errors.invalidId');
 
         const work = await this.subcontractorWorkRepository.findById(id);
         if (!work) {
             throw new NotFoundException(
-                this.i18n.translate('subcontractorWork.errors.notFound', { lang }),
+                this.i18n.translate('subcontractorWork.errors.notFound', { lang: this.getLang() }),
             );
         }
 
-        const projectId = work.project instanceof Types.ObjectId
-            ? work.project.toString()
-            : work.project;
+        // ✅ تحقق إن الـ work مش محذوف أصلاً
+        if (!work.isActive) {
+            throw new BadRequestException(
+                this.i18n.translate('subcontractorWork.errors.alreadyDeleted', { lang: this.getLang() }),
+            );
+        }
+
+        const projectId = (work.project as any)?._id?.toString() ?? work.project.toString();
 
         await this.subcontractorWorkRepository.deactivate(id, user._id as Types.ObjectId);
 
@@ -166,21 +144,16 @@ export class SubcontractorWorkService {
         return work;
     }
 
-    // ✅ Search
+    // ✅ Search — بنمرر projectId للريبو فعلياً
     async searchWorks(projectId: string, searchTerm: string): Promise<TSubcontractorWork[]> {
-        const lang = this.getLang();
-
-        if (!Types.ObjectId.isValid(projectId)) {
-            throw new BadRequestException(
-                this.i18n.translate('projects.errors.invalidId', { lang }),
-            );
-        }
-
-        return this.subcontractorWorkRepository.searchWorks(searchTerm);
+        this.validateObjectId(projectId, 'projects.errors.invalidId');
+        return this.subcontractorWorkRepository.searchWorks(searchTerm, projectId);
     }
 
     // ✅ Update Project Subcontractor Costs
-    private async updateProjectSubcontractorCosts(projectId: string | Types.ObjectId): Promise<void> {
+    private async updateProjectSubcontractorCosts(
+        projectId: string | Types.ObjectId,
+    ): Promise<void> {
         const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
         const totalAmount = await this.subcontractorWorkRepository.getTotalAmountByProject(id);
 

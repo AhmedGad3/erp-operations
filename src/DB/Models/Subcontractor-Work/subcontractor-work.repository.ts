@@ -1,5 +1,3 @@
-// subcontractor-work.repository.ts
-
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model, Types } from 'mongoose';
@@ -28,8 +26,6 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         super(workModel);
     }
 
-   
-
     async findById(id: string | Types.ObjectId): Promise<TSubcontractorWork | null> {
         return this.workModel
             .findById(id as Types.ObjectId)
@@ -48,21 +44,25 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
             .exec();
     }
 
-    // async findByWorkNo(workNo: number): Promise<TSubcontractorWork | null> {
-    //     return this.workModel
-    //         .findOne({ workNo })
-    //         .populate('project', 'name projectNo')
-    //         .populate('createdBy', 'name email')
-    //         .exec();
-    // }
+    async findByWorkNo(workNo: number): Promise<TSubcontractorWork | null> {
+        return this.workModel
+            .findOne({ workNo })
+            .populate('project', 'name projectNo')
+            .populate('createdBy', 'name email')
+            .exec();
+    }
 
     // ============================================
     // Query by Project
     // ============================================
 
+    // ✅ فلتر isActive: true عشان نتجاهل المحذوف soft-delete
     async findByProject(projectId: string | Types.ObjectId): Promise<TSubcontractorWork[]> {
         return this.workModel
-            .find({ project:  new Types.ObjectId(projectId.toString())})
+            .find({
+                project: new Types.ObjectId(projectId.toString()),
+                isActive: true,
+            })
             .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
             .exec();
@@ -74,9 +74,9 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     ): Promise<TSubcontractorWork[]> {
         return this.workModel
             .find({
-                project: projectId,
+                project: new Types.ObjectId(projectId.toString()),
                 contractorName: new RegExp(contractorName.trim(), 'i'),
-               
+                isActive: true,
             })
             .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
@@ -91,7 +91,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         return this.workModel
             .find({
                 contractorName: new RegExp(contractorName.trim(), 'i'),
-               
+                isActive: true,
             })
             .populate('project', 'name projectNo')
             .populate('createdBy', 'name email')
@@ -103,10 +103,20 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     // Search
     // ============================================
 
-    async searchWorks(searchTerm: string): Promise<TSubcontractorWork[]> {
+    // ✅ أضفنا projectId كـ optional filter + isActive: true
+    async searchWorks(
+        searchTerm: string,
+        projectId?: string | Types.ObjectId,
+    ): Promise<TSubcontractorWork[]> {
+        const baseFilter: FilterQuery<TSubcontractorWork> = { isActive: true };
+
+        if (projectId) {
+            baseFilter.project = new Types.ObjectId(projectId.toString());
+        }
+
         if (!searchTerm || searchTerm.trim().length === 0) {
             return this.workModel
-                .find()
+                .find(baseFilter)
                 .populate('project', 'name projectNo')
                 .populate('createdBy', 'name email')
                 .sort({ createdAt: -1 })
@@ -118,7 +128,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
 
         return this.workModel
             .find({
-                
+                ...baseFilter,
                 $or: [
                     { contractorName: searchRegex },
                     { itemDescription: searchRegex },
@@ -132,12 +142,11 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
             .exec();
     }
 
-
     async findForDropdown(
         filter: FilterQuery<TSubcontractorWork> = {},
     ): Promise<DropdownSubcontractorWork[]> {
         return this.workModel
-            .find({ ...filter })
+            .find({ isActive: true, ...filter })
             .select('_id contractorName itemDescription totalAmount')
             .sort({ createdAt: -1 })
             .lean<DropdownSubcontractorWork[]>()
@@ -178,10 +187,8 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     // Reports & Analytics
     // ============================================
 
-    async getTotalsByContractor(
-        projectId?: string | Types.ObjectId,
-    ): Promise<WorkSummary[]> {
-        const matchStage: any = { isActive: true };
+    async getTotalsByContractor(projectId?: string | Types.ObjectId): Promise<WorkSummary[]> {
+        const matchStage: FilterQuery<TSubcontractorWork> = { isActive: true };
 
         if (projectId) {
             matchStage.project = new Types.ObjectId(projectId.toString());
@@ -202,9 +209,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
             .exec();
     }
 
-    async getTotalAmountByProject(
-        projectId: string | Types.ObjectId,
-    ): Promise<number> {
+    async getTotalAmountByProject(projectId: string | Types.ObjectId): Promise<number> {
         const result = await this.workModel
             .aggregate([
                 {
@@ -235,17 +240,18 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         filter: FilterQuery<TSubcontractorWork> = {},
     ): Promise<{ data: TSubcontractorWork[]; total: number; page: number; totalPages: number }> {
         const skip = (page - 1) * limit;
+        const finalFilter = { ...filter, isActive: true };
 
         const [data, total] = await Promise.all([
             this.workModel
-                .find({ ...filter, isActive: true })
+                .find(finalFilter)
                 .populate('project', 'name projectNo')
                 .populate('createdBy', 'name email')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .exec(),
-            this.workModel.countDocuments({ ...filter, isActive: true }),
+            this.workModel.countDocuments(finalFilter),
         ]);
 
         return {
