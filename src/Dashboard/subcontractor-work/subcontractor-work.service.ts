@@ -49,17 +49,21 @@ export class SubcontractorWorkService {
 
         const totalAmount = createDto.quantity * createDto.unitPrice;
 
-        const workData = {
-            project: new Types.ObjectId(projectId),
-            contractorName: createDto.contractorName.trim(),
-            itemDescription: createDto.itemDescription.trim(),
-            unit: createDto.unit?.trim(),
-            quantity: createDto.quantity,
-            unitPrice: createDto.unitPrice,
-            totalAmount,
-            notes: createDto.notes?.trim(),
-            createdBy: user._id as Types.ObjectId,
-        };
+       const lastWork = await this.subcontractorWorkRepository.findOne({}, { sort: { workNo: -1 } });
+const workNo = lastWork ? lastWork.workNo + 1 : 1;
+
+const workData = {
+    workNo,
+    project: new Types.ObjectId(projectId),
+    contractorName: createDto.contractorName.trim(),
+    itemDescription: createDto.itemDescription.trim(),
+    unit: createDto.unit?.trim(),
+    quantity: createDto.quantity,
+    unitPrice: createDto.unitPrice,
+    totalAmount,
+    notes: createDto.notes?.trim(),
+    createdBy: user._id as Types.ObjectId,
+};
 
         const work = await this.subcontractorWorkRepository.create(workData);
 
