@@ -12,6 +12,7 @@ import { ProjectEquipmentModule } from './project-equipment/project-equipment.mo
 import { ProjectMiscellaneousModule } from './project-miscellaneous/project-miscellaneous.module';
 import { ProjectLaborModule } from './project-labor/project-labor.module';
 import { GeneralExpenseModule } from './General-Expense/general-expense.module';
+import { SubcontractorWorkModule } from './subcontractor-work/subcontractor-work.module';
 
 @Module({
   imports: [UserModule, UnitModule, MaterialModule, TransactionModule,
