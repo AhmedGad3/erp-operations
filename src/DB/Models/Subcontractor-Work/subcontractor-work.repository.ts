@@ -32,7 +32,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
 
     async findById(id: string | Types.ObjectId): Promise<TSubcontractorWork | null> {
         return this.workModel
-            .findById(id)
+            .findById(id as Types.ObjectId)
             .populate('project', 'name projectNo')
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
