@@ -28,50 +28,52 @@ export class SubcontractorWorkService {
 
     // ✅ Add Work to Project
     async addWorkToProject(
-        projectId: string,
-        createDto: CreateSubcontractorWorkDto,
-        user: TUser,
-    ): Promise<TSubcontractorWork> {
-        const lang = this.getLang();
+    projectId: string,
+    createDto: CreateSubcontractorWorkDto,
+    user: TUser,
+): Promise<TSubcontractorWork> {
+    const lang = this.getLang();
 
-        if (!Types.ObjectId.isValid(projectId)) {
-            throw new BadRequestException(
-                this.i18n.translate('projects.errors.invalidId', { lang }),
-            );
-        }
-
-        const project = await this.projectRepository.findById(projectId);
-        if (!project) {
-            throw new NotFoundException(
-                this.i18n.translate('projects.errors.notFound', { lang }),
-            );
-        }
-
-        const totalAmount = createDto.quantity * createDto.unitPrice;
-
-       const lastWork = await this.subcontractorWorkRepository.findOne({}, { sort: { workNo: -1 } });
-const workNo = lastWork ? lastWork.workNo + 1 : 1;
-
-const workData = {
-    workNo,
-    project: new Types.ObjectId(projectId),
-    contractorName: createDto.contractorName.trim(),
-    itemDescription: createDto.itemDescription.trim(),
-    unit: createDto.unit?.trim(),
-    quantity: createDto.quantity,
-    unitPrice: createDto.unitPrice,
-    totalAmount,
-    notes: createDto.notes?.trim(),
-    createdBy: user._id as Types.ObjectId,
-};
-
-        const work = await this.subcontractorWorkRepository.create(workData);
-
-        await this.updateProjectSubcontractorCosts(projectId);
-
-        return work;
+    if (!Types.ObjectId.isValid(projectId)) {
+        throw new BadRequestException(
+            this.i18n.translate('projects.errors.invalidId', { lang }),
+        );
     }
 
+    const project = await this.projectRepository.findById(projectId);
+    if (!project) {
+        throw new NotFoundException(
+            this.i18n.translate('projects.errors.notFound', { lang }),
+        );
+    }
+
+    const totalAmount = createDto.quantity * createDto.unitPrice;
+
+    const lastWork = await this.subcontractorWorkRepository.findOne(
+        { project: new Types.ObjectId(projectId), isActive: true },
+        { sort: { workNo: -1 } },
+    );
+    const workNo = lastWork ? lastWork.workNo + 1 : 1; // ✅ تعريف workNo هنا
+
+    const workData = {
+        workNo,
+        project: new Types.ObjectId(projectId),
+        contractorName: createDto.contractorName.trim(),
+        itemDescription: createDto.itemDescription.trim(),
+        unit: createDto.unit?.trim(),
+        quantity: createDto.quantity,
+        unitPrice: createDto.unitPrice,
+        totalAmount,
+        notes: createDto.notes?.trim(),
+        createdBy: user._id as Types.ObjectId,
+    };
+
+    const work = await this.subcontractorWorkRepository.create(workData);
+
+    await this.updateProjectSubcontractorCosts(projectId);
+
+    return work;
+}
     // ✅ Get All Works for Project
     async getProjectWorks(projectId: string): Promise<TSubcontractorWork[]> {
         const lang = this.getLang();
