@@ -40,7 +40,7 @@ export class MaterialIssueService {
         return I18nContext.current()?.lang || 'ar';
     }
 
-  async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
+async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
     const lang = this.getLang();
 
     // 1️⃣ Validate project
@@ -106,39 +106,25 @@ export class MaterialIssueService {
             );
         }
 
-        // ── Price validation ──
+        // ── Discount calculation (سعر الشراء - سعر الصرف) ──
         const lastPurchasePrice = material.lastPurchasePrice ?? 0;
-        if (item.unitPrice < lastPurchasePrice) {
-            throw new BadRequestException(
-                this.i18n.translate('materials.errors.invalidPrice', {
-                    lang,
-                    args: {
-                        material: material.nameAr,
-                        min: lastPurchasePrice,
-                        entered: item.unitPrice,
-                    },
-                }),
-            );
-        }
-
-        // ── Discount calculation ──
-        const discountAmount  = item.unitPrice - lastPurchasePrice;
-        const discountPercent = item.unitPrice > 0
-            ? (discountAmount / item.unitPrice) * 100
+        const discountAmount    = lastPurchasePrice - item.unitPrice;  // ممكن يبقى سالب لو صرف بسعر أعلى
+        const discountPercent   = lastPurchasePrice > 0
+            ? (discountAmount / lastPurchasePrice) * 100
             : 0;
 
         // ── Item totals ──
-        const totalPrice = item.quantity * item.unitPrice;
-        const totalCost  = item.quantity * lastPurchasePrice;
+        const totalPrice = item.quantity * item.unitPrice;       // اللي بيتحمله المشروع فعلاً
+        const totalCost  = item.quantity * lastPurchasePrice;    // التكلفة الحقيقية من المخزن
 
         grandTotalPrice += totalPrice;
         grandTotalCost  += totalCost;
 
         processedItems.push({
             materialId: new Types.ObjectId(item.materialId),
-            unitId: new Types.ObjectId(item.unitId),
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
+            unitId:     new Types.ObjectId(item.unitId),
+            quantity:   item.quantity,
+            unitPrice:  item.unitPrice,
             discountPercent: Math.round(discountPercent * 100) / 100,
             discountAmount:  Math.round(discountAmount  * 100) / 100,
             totalPrice,
@@ -146,7 +132,7 @@ export class MaterialIssueService {
         });
     }
 
-    const totalDiscount = grandTotalPrice - grandTotalCost;
+    const totalDiscount = grandTotalCost - grandTotalPrice; // موجب = خصم | سالب = هامش ربح
 
     // 3️⃣ Create Material Issue
     const issueNo = await this.counterService.getNext('material-issue');
@@ -164,15 +150,17 @@ export class MaterialIssueService {
         createdBy:  user._id as Types.ObjectId,
     });
 
-    project.materialCosts += grandTotalPrice; 
+    // 4️⃣ Update project costs (بالسعر الفعلي للصرف)
+    project.materialCosts += grandTotalPrice;
     project.totalCosts =
-        project.materialCosts +
-        project.laborCosts    +
+        project.materialCosts  +
+        project.laborCosts     +
         project.equipmentCosts +
         project.otherCosts;
 
     await project.save();
 
+    // 5️⃣ Stock movements
     for (const item of processedItems) {
         await this.stockMovementService.create({
             materialId:    item.materialId,
