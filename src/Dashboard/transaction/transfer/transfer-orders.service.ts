@@ -40,145 +40,154 @@ export class MaterialIssueService {
         return I18nContext.current()?.lang || 'ar';
     }
 
-    async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
-  const lang = this.getLang();
+  async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
+    const lang = this.getLang();
 
-  // 1️⃣ Validate project
-  const project = await this.projectModel.findById(dto.projectId);
-  if (!project || !project.isActive) {
-    throw new NotFoundException(
-      this.i18n.translate('project.errors.notFound', { lang }),
-    );
-  }
-
-  const processedItems: Array<{
-    materialId: Types.ObjectId;
-    unitId: Types.ObjectId;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-  }> = [];
-
-  let totalCost = 0;
-  let totalPrice = 0;
-
-  // 2️⃣ Process items
-  for (const item of dto.items) {
-    const material = await this.materialRepository.findById(item.materialId);
-    if (!material || !material.isActive) {
-      throw new NotFoundException(
-        this.i18n.translate('materials.errors.notFound', { lang }),
-      );
-    }
-
-    let conversionFactor = 1;
-    if (item.unitId.toString() !== material.baseUnit.toString()) {
-      const altUnit = material.alternativeUnits?.find(
-        u => u.unitId.toString() === item.unitId.toString(),
-      );
-      if (!altUnit) {
-        throw new BadRequestException(
-          this.i18n.translate('materials.errors.invalidUnit', {
-            lang,
-            args: { material: material.nameAr },
-          }),
+    // 1️⃣ Validate project
+    const project = await this.projectModel.findById(dto.projectId);
+    if (!project || !project.isActive) {
+        throw new NotFoundException(
+            this.i18n.translate('project.errors.notFound', { lang }),
         );
-      }
-      conversionFactor = altUnit.conversionFactor;
     }
 
-    const quantityInBaseUnit = item.quantity * conversionFactor;
+    const processedItems: Array<{
+        materialId: Types.ObjectId;
+        unitId: Types.ObjectId;
+        quantity: number;
+        unitPrice: number;
+        discountPercent: number;
+        discountAmount: number;
+        totalPrice: number;
+        totalCost: number;
+    }> = [];
 
-    if (material.currentStock < quantityInBaseUnit) {
-      throw new BadRequestException(
-        this.i18n.translate('materials.errors.insufficientStock', {
-          lang,
-          args: {
-            material: material.nameAr,
-            available: material.currentStock,
-            requested: quantityInBaseUnit,
-          },
-        }),
-      );
+    let grandTotalPrice = 0;
+    let grandTotalCost  = 0;
+
+    // 2️⃣ Process items
+    for (const item of dto.items) {
+        const material = await this.materialRepository.findById(item.materialId);
+        if (!material || !material.isActive) {
+            throw new NotFoundException(
+                this.i18n.translate('materials.errors.notFound', { lang }),
+            );
+        }
+
+        // ── Conversion factor ──
+        let conversionFactor = 1;
+        if (item.unitId.toString() !== material.baseUnit.toString()) {
+            const altUnit = material.alternativeUnits?.find(
+                u => u.unitId.toString() === item.unitId.toString(),
+            );
+            if (!altUnit) {
+                throw new BadRequestException(
+                    this.i18n.translate('materials.errors.invalidUnit', {
+                        lang,
+                        args: { material: material.nameAr },
+                    }),
+                );
+            }
+            conversionFactor = altUnit.conversionFactor;
+        }
+
+        // ── Stock validation ──
+        const quantityInBaseUnit = item.quantity * conversionFactor;
+        if (material.currentStock < quantityInBaseUnit) {
+            throw new BadRequestException(
+                this.i18n.translate('materials.errors.insufficientStock', {
+                    lang,
+                    args: {
+                        material: material.nameAr,
+                        available: material.currentStock,
+                        requested: quantityInBaseUnit,
+                    },
+                }),
+            );
+        }
+
+        // ── Price validation ──
+        const lastPurchasePrice = material.lastPurchasePrice ?? 0;
+        if (item.unitPrice < lastPurchasePrice) {
+            throw new BadRequestException(
+                this.i18n.translate('materials.errors.invalidPrice', {
+                    lang,
+                    args: {
+                        material: material.nameAr,
+                        min: lastPurchasePrice,
+                        entered: item.unitPrice,
+                    },
+                }),
+            );
+        }
+
+        // ── Discount calculation ──
+        const discountAmount  = item.unitPrice - lastPurchasePrice;
+        const discountPercent = item.unitPrice > 0
+            ? (discountAmount / item.unitPrice) * 100
+            : 0;
+
+        // ── Item totals ──
+        const totalPrice = item.quantity * item.unitPrice;
+        const totalCost  = item.quantity * lastPurchasePrice;
+
+        grandTotalPrice += totalPrice;
+        grandTotalCost  += totalCost;
+
+        processedItems.push({
+            materialId: new Types.ObjectId(item.materialId),
+            unitId: new Types.ObjectId(item.unitId),
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discountPercent: Math.round(discountPercent * 100) / 100,
+            discountAmount:  Math.round(discountAmount  * 100) / 100,
+            totalPrice,
+            totalCost,
+        });
     }
 
-    if (
-      material.lastPurchasePrice != null &&
-      item.unitPrice < material.lastPurchasePrice
-    ) {
-      throw new BadRequestException(
-        this.i18n.translate('materials.errors.invalidPrice', {
-          lang,
-          args: {
-            material: material.nameAr,
-            min: material.lastPurchasePrice,
-            entered: item.unitPrice,
-          },
-        }),
-      );
-    }
+    const totalDiscount = grandTotalPrice - grandTotalCost;
 
-    const itemCost = quantityInBaseUnit * item.unitPrice;
-    totalCost += itemCost;
+    // 3️⃣ Create Material Issue
+    const issueNo = await this.counterService.getNext('material-issue');
 
-    const itemTotalPrice = item.quantity * item.unitPrice;
-    totalPrice += itemTotalPrice;
-
-    processedItems.push({
-      materialId: new Types.ObjectId(item.materialId),
-      unitId: new Types.ObjectId(item.unitId),
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      totalPrice: itemTotalPrice,
+    const materialIssue = await this.materialIssueModel.create({
+        issueNo,
+        projectId:  new Types.ObjectId(dto.projectId),
+        clientId:   new Types.ObjectId(project.clientId),
+        issueDate:  new Date(dto.issueDate),
+        items:      processedItems,
+        totalPrice:    grandTotalPrice,
+        totalCost:     grandTotalCost,
+        totalDiscount,
+        notes:      dto.notes,
+        createdBy:  user._id as Types.ObjectId,
     });
-  }
 
-  // 3️⃣ Create Material Issue
-  const issueNo = await this.counterService.getNext('material-issue');
+    project.materialCosts += grandTotalPrice; 
+    project.totalCosts =
+        project.materialCosts +
+        project.laborCosts    +
+        project.equipmentCosts +
+        project.otherCosts;
 
-  const materialIssue = await this.materialIssueModel.create({
-    issueNo,
-    projectId: new Types.ObjectId(dto.projectId),
-    clientId: new Types.ObjectId(project.clientId),
-    issueDate: new Date(dto.issueDate),
-    items: processedItems,
-    totalCost,
-    totalPrice,
-    notes: dto.notes,
-    createdBy: user._id as Types.ObjectId,
-  });
+    await project.save();
 
-  // 4️⃣ Update project costs
-  project.materialCosts += totalCost;
-  project.totalInvoiced += totalPrice; 
-  project.totalCosts =
-    project.materialCosts +
-    project.laborCosts +
-    project.equipmentCosts +
-    project.otherCosts;
+    for (const item of processedItems) {
+        await this.stockMovementService.create({
+            materialId:    item.materialId,
+            unitId:        item.unitId,
+            type:          StockMovementType.PROJECT_ISSUE,
+            quantity:      item.quantity,
+            unitPrice:     item.unitPrice,
+            referenceType: 'MaterialIssue',
+            referenceId:   materialIssue._id as Types.ObjectId,
+            projectId:     new Types.ObjectId(dto.projectId),
+            createdBy:     user._id as Types.ObjectId,
+        });
+    }
 
-  await project.save();
-
-  // 5️⃣ Stock movements
-  for (const item of processedItems) {
-    await this.stockMovementService.create({
-      materialId: item.materialId,
-      unitId: item.unitId,
-      type: StockMovementType.PROJECT_ISSUE,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      referenceType: 'MaterialIssue',
-      referenceId: materialIssue._id as Types.ObjectId,
-      projectId: new Types.ObjectId(dto.projectId),
-      createdBy: user._id as Types.ObjectId,
-    });
-  }
-
- 
-
-  return {
-    materialIssue,
-  };
+    return { materialIssue };
 }
 
 

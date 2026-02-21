@@ -17,34 +17,44 @@ export class MaterialIssue {
 
     @Prop({
         type: [
-            {
-                materialId: { type: Types.ObjectId, ref: 'Material', required: true },
-                unitId: { type: Types.ObjectId, ref: 'Unit', required: true }, // ✅ الوحدة
-                quantity: { type: Number, required: true, min: 0.0001 },
-                // unitCost: { type: Number, required: true, min: 0 },
-                
-                unitPrice: { type: Number, required: true, min: 0 },
-                // totalCost: { type: Number, required: true, min: 0 },
-                totalPrice: { type: Number, required: true, min: 0 },
-            },
+           {
+    materialId: { type: Types.ObjectId, ref: 'Material', required: true },
+    unitId: { type: Types.ObjectId, ref: 'Unit', required: true },
+    quantity: { type: Number, required: true, min: 0.0001 },
+
+    unitPrice: { type: Number, required: true, min: 0 },       
+    discountPercent: { type: Number, required: true, min: 0 },
+    discountAmount: { type: Number, required: true, min: 0 },  
+
+    totalPrice: { type: Number, required: true, min: 0 },  
+    totalCost: { type: Number, required: true, min: 0 },   
+}
         ],
         required: true,
     })
     items: Array<{
         materialId: Types.ObjectId;
-        unitId: Types.ObjectId;  // ✅
+        unitId: Types.ObjectId;
         quantity: number;
-        unitCost: number;
-        // unitPrice: number;
-        // totalCost: number;
+
+        lastPurchasePrice: number;
+        unitPrice: number;
+
+        discountPercent: number;
+        discountAmount: number;
+
         totalPrice: number;
+        totalCost: number;
     }>;
 
     @Prop({ required: true, min: 0 })
-    totalCost: number;
+    totalCost: number;     
 
     @Prop({ required: true, min: 0 })
-    totalPrice: number;
+    totalPrice: number;    
+
+    @Prop({ required: true, min: 0, default: 0 })
+    totalDiscount: number; 
 
     @Prop({ trim: true })
     notes?: string;
