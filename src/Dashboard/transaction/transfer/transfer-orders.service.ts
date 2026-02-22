@@ -55,13 +55,13 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
     const project = await this.projectModel.findById(dto.projectId);
     if (!project || !project.isActive) {
         throw new NotFoundException(
-            this.i18n.translate('project.errors.notFound', { lang }),
+            this.i18n.translate('projects.errors.notFound', { lang }),
         );
     }
 
     if (this.isProjectLocked(project.status)) {
         throw new BadRequestException(
-            this.i18n.translate('project.errors.projectLocked', { lang }),
+            this.i18n.translate('projects.errors.projectLocked', { lang }),
         );
     }
 
