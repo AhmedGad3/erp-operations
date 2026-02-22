@@ -28,6 +28,15 @@ export class ProjectEquipmentService {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private isProjectLocked(status: ProjectStatus): boolean {
+        return [
+            ProjectStatus.ON_HOLD,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.CANCELLED,
+            ProjectStatus.CLOSED,
+        ].includes(status);
+    }
+
     // ✅ Add Equipment to Project
     async addEquipmentToProject(
         projectId: string,
@@ -36,7 +45,6 @@ export class ProjectEquipmentService {
     ): Promise<TProjectEquipment> {
         const lang = this.getLang();
 
-        // Validate Project
         if (!Types.ObjectId.isValid(projectId)) {
             throw new BadRequestException(
                 this.i18n.translate('projects.errors.invalidId', { lang }),
@@ -50,7 +58,12 @@ export class ProjectEquipmentService {
             );
         }
 
-        // Validate Asset if COMPANY_ASSET
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         if (createDto.equipmentSource === EquipmentSource.COMPANY_ASSET) {
             if (!createDto.assetId) {
                 throw new BadRequestException(
@@ -65,21 +78,18 @@ export class ProjectEquipmentService {
                 );
             }
 
-            // Check if asset is available
             if (asset.status !== 'AVAILABLE') {
                 throw new ConflictException(
                     this.i18n.translate('projectEquipment.errors.assetNotAvailable', { lang }),
                 );
             }
 
-            // Update asset status to IN_USE
             await this.assetRepository.updateStatus(
                 createDto.assetId,
                 'IN_USE',
                 user._id as Types.ObjectId,
             );
         } else {
-            // EXTERNAL_RENTAL
             if (!createDto.equipmentName) {
                 throw new BadRequestException(
                     this.i18n.translate('projectEquipment.errors.equipmentNameRequired', { lang }),
@@ -87,18 +97,14 @@ export class ProjectEquipmentService {
             }
         }
 
-        // Calculate costs
         const rentalCost = createDto.numberOfDays * createDto.dailyRentalRate;
-        
         const fuelCost = createDto.fuelCost || 0;
         const operatorCost = createDto.operatorCost || 0;
         const maintenanceCost = createDto.maintenanceCost || 0;
         const otherOperatingCost = createDto.otherOperatingCost || 0;
-        
         const totalOperatingCost = fuelCost + operatorCost + maintenanceCost + otherOperatingCost;
         const totalCost = rentalCost + totalOperatingCost;
 
-        // Create equipment record
         const equipmentData: any = {
             projectId: new Types.ObjectId(projectId),
             equipmentSource: createDto.equipmentSource,
@@ -126,7 +132,6 @@ export class ProjectEquipmentService {
 
         const equipment = await this.projectEquipmentRepository.create(equipmentData);
 
-        // Update project equipmentCosts
         await this.updateProjectEquipmentCosts(projectId);
 
         return equipment;
@@ -171,9 +176,27 @@ export class ProjectEquipmentService {
         updateDto: UpdateProjectEquipmentDto,
         user: TUser,
     ): Promise<TProjectEquipment> {
+        const lang = this.getLang();
+
         const equipment = await this.getEquipmentById(id);
 
-        // Recalculate costs if needed
+        const projectId = equipment.projectId instanceof Types.ObjectId
+            ? equipment.projectId.toString()
+            : equipment.projectId;
+
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         const numberOfDays = updateDto.numberOfDays ?? equipment.numberOfDays;
         const dailyRentalRate = updateDto.dailyRentalRate ?? equipment.dailyRentalRate;
         const rentalCost = numberOfDays * dailyRentalRate;
@@ -194,20 +217,12 @@ export class ProjectEquipmentService {
             updatedBy: user._id as Types.ObjectId,
         };
 
-        if (updateDto.startDate) {
-            updateData.startDate = new Date(updateDto.startDate);
-        }
-        if (updateDto.endDate) {
-            updateData.endDate = new Date(updateDto.endDate);
-        }
+        if (updateDto.startDate) updateData.startDate = new Date(updateDto.startDate);
+        if (updateDto.endDate) updateData.endDate = new Date(updateDto.endDate);
 
         Object.assign(equipment, updateData);
         await equipment.save();
 
-        // Update project equipmentCosts
-        const projectId = equipment.projectId instanceof Types.ObjectId 
-            ? equipment.projectId.toString() 
-            : equipment.projectId;
         await this.updateProjectEquipmentCosts(projectId);
 
         return equipment;
@@ -225,7 +240,23 @@ export class ProjectEquipmentService {
             );
         }
 
-        // If COMPANY_ASSET, return asset to AVAILABLE
+        const projectId = equipment.projectId instanceof Types.ObjectId
+            ? equipment.projectId.toString()
+            : equipment.projectId;
+
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         if (equipment.equipmentSource === EquipmentSource.COMPANY_ASSET && equipment.assetId) {
             await this.assetRepository.updateStatus(
                 equipment.assetId.toString(),
@@ -239,10 +270,6 @@ export class ProjectEquipmentService {
             user._id as Types.ObjectId,
         );
 
-        // Update project equipmentCosts
-        const projectId = equipment.projectId instanceof Types.ObjectId 
-            ? equipment.projectId.toString() 
-            : equipment.projectId;
         await this.updateProjectEquipmentCosts(projectId);
 
         return result!;
@@ -270,34 +297,27 @@ export class ProjectEquipmentService {
     }
 
     // ✅ Update Project Equipment Costs
-   private async updateProjectEquipmentCosts(projectId: string | Types.ObjectId): Promise<void> {
-    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
-    
-    const project = await this.projectRepository.findById(id);
-    if (!project) return;
+    private async updateProjectEquipmentCosts(projectId: string | Types.ObjectId): Promise<void> {
+        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
 
-    const lockedStatuses = [
-        ProjectStatus.ON_HOLD,
-        ProjectStatus.COMPLETED,
-        ProjectStatus.CANCELLED,
-        ProjectStatus.CLOSED,
-    ];
+        const project = await this.projectRepository.findById(id);
+        if (!project) return;
 
-    if (lockedStatuses.includes(project.status)) return;
+        if (this.isProjectLocked(project.status)) return;
 
-    const totalCost = await this.projectEquipmentRepository.calculateTotalCostByProject(id);
+        const totalCost = await this.projectEquipmentRepository.calculateTotalCostByProject(id);
 
-    project.equipmentCosts = totalCost;
-    project.totalCosts =
-        project.materialCosts +
-        project.laborCosts +
-        totalCost +
-        project.otherCosts;
+        project.equipmentCosts = totalCost;
+        project.totalCosts =
+            (project.materialCosts || 0) +
+            (project.laborCosts || 0) +
+            totalCost +
+            (project.otherCosts || 0);
 
-    if (project.status === ProjectStatus.PLANNED) {
-        project.status = ProjectStatus.IN_PROGRESS;
+        if (project.status === ProjectStatus.PLANNED) {
+            project.status = ProjectStatus.IN_PROGRESS;
+        }
+
+        await project.save();
     }
-
-    await project.save();
-}
 }

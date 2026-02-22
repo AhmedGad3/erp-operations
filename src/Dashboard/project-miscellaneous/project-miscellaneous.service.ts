@@ -25,6 +25,15 @@ export class ProjectMiscellaneousService {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private isProjectLocked(status: ProjectStatus): boolean {
+        return [
+            ProjectStatus.ON_HOLD,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.CANCELLED,
+            ProjectStatus.CLOSED,
+        ].includes(status);
+    }
+
     // ✅ Add Miscellaneous to Project
     async addMiscellaneousToProject(
         projectId: string,
@@ -33,7 +42,6 @@ export class ProjectMiscellaneousService {
     ): Promise<TProjectMiscellaneous> {
         const lang = this.getLang();
 
-        // Validate Project
         if (!Types.ObjectId.isValid(projectId)) {
             throw new BadRequestException(
                 this.i18n.translate('projects.errors.invalidId', { lang }),
@@ -44,6 +52,12 @@ export class ProjectMiscellaneousService {
         if (!project) {
             throw new NotFoundException(
                 this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
             );
         }
 
@@ -59,7 +73,6 @@ export class ProjectMiscellaneousService {
 
         const miscellaneous = await this.projectMiscellaneousRepository.create(miscellaneousData);
 
-        // Update project otherCosts
         await this.updateProjectMiscellaneousCosts(projectId);
 
         return miscellaneous;
@@ -106,11 +119,27 @@ export class ProjectMiscellaneousService {
     ): Promise<TProjectMiscellaneous> {
         const lang = this.getLang();
 
-        // Use findById instead of getMiscellaneousById to avoid populated projectId
         const miscellaneous = await this.projectMiscellaneousRepository.findById(id);
         if (!miscellaneous) {
             throw new NotFoundException(
                 this.i18n.translate('projectMiscellaneous.errors.notFound', { lang }),
+            );
+        }
+
+        const projectId = miscellaneous.projectId instanceof Types.ObjectId
+            ? miscellaneous.projectId.toString()
+            : miscellaneous.projectId;
+
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
             );
         }
 
@@ -119,27 +148,14 @@ export class ProjectMiscellaneousService {
             updatedBy: user._id as Types.ObjectId,
         };
 
-        if (updateDto.date) {
-            updateData.date = new Date(updateDto.date);
-        }
-        if (updateDto.description) {
-            updateData.description = updateDto.description.trim();
-        }
-        if (updateDto.category) {
-            updateData.category = updateDto.category.trim();
-        }
-        if (updateDto.notes) {
-            updateData.notes = updateDto.notes.trim();
-        }
+        if (updateDto.date) updateData.date = new Date(updateDto.date);
+        if (updateDto.description) updateData.description = updateDto.description.trim();
+        if (updateDto.category) updateData.category = updateDto.category.trim();
+        if (updateDto.notes) updateData.notes = updateDto.notes.trim();
 
         Object.assign(miscellaneous, updateData);
         await miscellaneous.save();
 
-        // Update project otherCosts
-        const projectId = miscellaneous.projectId instanceof Types.ObjectId 
-            ? miscellaneous.projectId.toString() 
-            : miscellaneous.projectId;
-        
         await this.updateProjectMiscellaneousCosts(projectId);
 
         return miscellaneous;
@@ -149,7 +165,6 @@ export class ProjectMiscellaneousService {
     async deleteMiscellaneous(id: string, user: TUser): Promise<TProjectMiscellaneous> {
         const lang = this.getLang();
 
-        // Use findById instead of getMiscellaneousById to avoid populated projectId
         const miscellaneous = await this.projectMiscellaneousRepository.findById(id);
         if (!miscellaneous) {
             throw new NotFoundException(
@@ -157,14 +172,25 @@ export class ProjectMiscellaneousService {
             );
         }
 
-        const projectId = miscellaneous.projectId instanceof Types.ObjectId 
-            ? miscellaneous.projectId.toString() 
+        const projectId = miscellaneous.projectId instanceof Types.ObjectId
+            ? miscellaneous.projectId.toString()
             : miscellaneous.projectId;
 
-        // Delete the miscellaneous record
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         await this.projectMiscellaneousRepository.delete(id);
 
-        // Update project otherCosts
         await this.updateProjectMiscellaneousCosts(projectId);
 
         return miscellaneous;
@@ -221,34 +247,27 @@ export class ProjectMiscellaneousService {
     }
 
     // ✅ Update Project Miscellaneous Costs
-  private async updateProjectMiscellaneousCosts(projectId: string | Types.ObjectId): Promise<void> {
-    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+    private async updateProjectMiscellaneousCosts(projectId: string | Types.ObjectId): Promise<void> {
+        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
 
-    const project = await this.projectRepository.findById(id);
-    if (!project) return;
+        const project = await this.projectRepository.findById(id);
+        if (!project) return;
 
-    const lockedStatuses = [
-        ProjectStatus.ON_HOLD,
-        ProjectStatus.COMPLETED,
-        ProjectStatus.CANCELLED,
-        ProjectStatus.CLOSED,
-    ];
+        if (this.isProjectLocked(project.status)) return;
 
-    if (lockedStatuses.includes(project.status)) return;
+        const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(id);
 
-    const totalCost = await this.projectMiscellaneousRepository.calculateTotalCostByProject(id);
+        project.otherCosts = totalCost;
+        project.totalCosts =
+            (project.materialCosts || 0) +
+            (project.laborCosts || 0) +
+            (project.equipmentCosts || 0) +
+            totalCost;
 
-    project.otherCosts = totalCost;
-    project.totalCosts =
-        (project.materialCosts || 0) +
-        (project.laborCosts || 0) +
-        (project.equipmentCosts || 0) +
-        totalCost;
+        if (project.status === ProjectStatus.PLANNED) {
+            project.status = ProjectStatus.IN_PROGRESS;
+        }
 
-    if (project.status === ProjectStatus.PLANNED) {
-        project.status = ProjectStatus.IN_PROGRESS;
+        await project.save();
     }
-
-    await project.save();
-}
 }
