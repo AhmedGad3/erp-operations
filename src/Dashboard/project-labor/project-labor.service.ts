@@ -25,6 +25,15 @@ export class ProjectLaborService {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private isProjectLocked(status: ProjectStatus): boolean {
+        return [
+            ProjectStatus.ON_HOLD,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.CANCELLED,
+            ProjectStatus.CLOSED,
+        ].includes(status);
+    }
+
     // ✅ Add Labor to Project
     async addLaborToProject(
         projectId: string,
@@ -33,7 +42,6 @@ export class ProjectLaborService {
     ): Promise<TProjectLabor> {
         const lang = this.getLang();
 
-        // Validate Project
         if (!Types.ObjectId.isValid(projectId)) {
             throw new BadRequestException(
                 this.i18n.translate('projects.errors.invalidId', { lang }),
@@ -47,7 +55,12 @@ export class ProjectLaborService {
             );
         }
 
-        // Calculate costs
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         const laborCost = createDto.numberOfDays * createDto.dailyRate;
         const materialCost = createDto.materialCost || 0;
         const totalCost = laborCost + materialCost;
@@ -70,7 +83,6 @@ export class ProjectLaborService {
 
         const labor = await this.projectLaborRepository.create(laborData);
 
-        // Update project laborCosts
         await this.updateProjectLaborCosts(projectId);
 
         return labor;
@@ -115,23 +127,38 @@ export class ProjectLaborService {
         updateDto: UpdateProjectLaborDto,
         user: TUser,
     ): Promise<TProjectLabor> {
-        // Use findById instead of findByIdWithPopulate to avoid populated projectId
+        const lang = this.getLang();
+
         const labor = await this.projectLaborRepository.findById(id);
         if (!labor) {
             throw new NotFoundException(
-                this.i18n.translate('projectLabor.errors.notFound', { lang: this.getLang() }),
+                this.i18n.translate('projectLabor.errors.notFound', { lang }),
             );
         }
 
-        // Recalculate costs if needed
+        const projectId = labor.projectId instanceof Types.ObjectId
+            ? labor.projectId.toString()
+            : labor.projectId;
+
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         const numberOfDays = updateDto.numberOfDays ?? labor.numberOfDays;
         const dailyRate = updateDto.dailyRate ?? labor.dailyRate;
         const laborCost = numberOfDays * dailyRate;
-
         const materialCost = updateDto.materialCost ?? labor.materialCost;
         const totalCost = laborCost + materialCost;
 
-        // Prepare update object
         const updateData: any = {
             ...updateDto,
             laborCost,
@@ -149,11 +176,6 @@ export class ProjectLaborService {
         Object.assign(labor, updateData);
         await labor.save();
 
-        // Update project labor costs
-        const projectId = labor.projectId instanceof Types.ObjectId 
-            ? labor.projectId.toString() 
-            : labor.projectId;
-        
         await this.updateProjectLaborCosts(projectId);
 
         return labor;
@@ -161,21 +183,34 @@ export class ProjectLaborService {
 
     // ✅ Delete Labor
     async deleteLabor(id: string, user: TUser): Promise<TProjectLabor> {
+        const lang = this.getLang();
+
         const labor = await this.projectLaborRepository.findById(id);
         if (!labor) {
             throw new NotFoundException(
-                this.i18n.translate('projectLabor.errors.notFound', { lang: this.getLang() }),
+                this.i18n.translate('projectLabor.errors.notFound', { lang }),
             );
         }
 
-        const projectId = labor.projectId instanceof Types.ObjectId 
-            ? labor.projectId.toString() 
+        const projectId = labor.projectId instanceof Types.ObjectId
+            ? labor.projectId.toString()
             : labor.projectId;
 
-        // Delete the labor record
+        const project = await this.projectRepository.findById(projectId);
+        if (!project) {
+            throw new NotFoundException(
+                this.i18n.translate('projects.errors.notFound', { lang }),
+            );
+        }
+
+        if (this.isProjectLocked(project.status)) {
+            throw new BadRequestException(
+                this.i18n.translate('projects.errors.projectLocked', { lang }),
+            );
+        }
+
         await this.projectLaborRepository.delete(id);
 
-        // Update project laborCosts
         await this.updateProjectLaborCosts(projectId);
 
         return labor;
@@ -235,34 +270,27 @@ export class ProjectLaborService {
     }
 
     // ✅ Update Project Labor Costs
-   private async updateProjectLaborCosts(projectId: string | Types.ObjectId): Promise<void> {
-    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
+    private async updateProjectLaborCosts(projectId: string | Types.ObjectId): Promise<void> {
+        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
 
-    const project = await this.projectRepository.findById(id);
-    if (!project) return;
+        const project = await this.projectRepository.findById(id);
+        if (!project) return;
 
-    const lockedStatuses = [
-        ProjectStatus.ON_HOLD,
-        ProjectStatus.COMPLETED,
-        ProjectStatus.CANCELLED,
-        ProjectStatus.CLOSED,
-    ];
+        if (this.isProjectLocked(project.status)) return;
 
-    if (lockedStatuses.includes(project.status)) return;
+        const totalCost = await this.projectLaborRepository.calculateTotalCostByProject(id);
 
-    const totalCost = await this.projectLaborRepository.calculateTotalCostByProject(id);
+        project.laborCosts = totalCost;
+        project.totalCosts =
+            (project.materialCosts || 0) +
+            totalCost +
+            (project.equipmentCosts || 0) +
+            (project.otherCosts || 0);
 
-    project.laborCosts = totalCost;
-    project.totalCosts =
-        (project.materialCosts || 0) +
-        totalCost +
-        (project.equipmentCosts || 0) +
-        (project.otherCosts || 0);
+        if (project.status === ProjectStatus.PLANNED) {
+            project.status = ProjectStatus.IN_PROGRESS;
+        }
 
-    if (project.status === ProjectStatus.PLANNED) {
-        project.status = ProjectStatus.IN_PROGRESS;
+        await project.save();
     }
-
-    await project.save();
-}
 }
