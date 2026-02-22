@@ -8,7 +8,7 @@ import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { MaterialIssue, MaterialIssueDocument } from '../../../DB/Models/Transaction/project/material-issue.schema';
 import { ProjectInvoice, ProjectInvoiceDocument } from '../../../DB/Models/Transaction/project/project-invoice.schema';
-import { Project, TProject } from '../../../DB/Models/Project/project.schema';
+import { Project, ProjectStatus, TProject } from '../../../DB/Models/Project/project.schema';
 import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
 import { MaterialRepository, TUser } from '../../../DB';
 import { CreateMaterialIssueDto } from './dto/create-material-issue.dto';
@@ -39,6 +39,14 @@ export class MaterialIssueService {
     private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
     }
+private isProjectLocked(status: ProjectStatus): boolean {
+    return [
+        ProjectStatus.ON_HOLD,
+        ProjectStatus.COMPLETED,
+        ProjectStatus.CANCELLED,
+        ProjectStatus.CLOSED,
+    ].includes(status);
+}
 
 async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
     const lang = this.getLang();
@@ -48,6 +56,12 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
     if (!project || !project.isActive) {
         throw new NotFoundException(
             this.i18n.translate('project.errors.notFound', { lang }),
+        );
+    }
+
+    if (this.isProjectLocked(project.status)) {
+        throw new BadRequestException(
+            this.i18n.translate('project.errors.projectLocked', { lang }),
         );
     }
 
@@ -106,16 +120,16 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
             );
         }
 
-        // ── Discount calculation (سعر الشراء - سعر الصرف) ──
+        // ── Discount calculation ──
         const lastPurchasePrice = material.lastPurchasePrice ?? 0;
-        const discountAmount    = lastPurchasePrice - item.unitPrice;  // ممكن يبقى سالب لو صرف بسعر أعلى
+        const discountAmount    = lastPurchasePrice - item.unitPrice;
         const discountPercent   = lastPurchasePrice > 0
             ? (discountAmount / lastPurchasePrice) * 100
             : 0;
 
         // ── Item totals ──
-        const totalPrice = item.quantity * item.unitPrice;       // اللي بيتحمله المشروع فعلاً
-        const totalCost  = item.quantity * lastPurchasePrice;    // التكلفة الحقيقية من المخزن
+        const totalPrice = item.quantity * item.unitPrice;
+        const totalCost  = item.quantity * lastPurchasePrice;
 
         grandTotalPrice += totalPrice;
         grandTotalCost  += totalCost;
@@ -132,7 +146,7 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
         });
     }
 
-    const totalDiscount = grandTotalCost - grandTotalPrice; // موجب = خصم | سالب = هامش ربح
+    const totalDiscount = grandTotalCost - grandTotalPrice;
 
     // 3️⃣ Create Material Issue
     const issueNo = await this.counterService.getNext('material-issue');
@@ -150,13 +164,17 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
         createdBy:  user._id as Types.ObjectId,
     });
 
-    // 4️⃣ Update project costs (بالسعر الفعلي للصرف)
+    // 4️⃣ Update project costs
     project.materialCosts += grandTotalPrice;
     project.totalCosts =
         project.materialCosts  +
         project.laborCosts     +
         project.equipmentCosts +
         project.otherCosts;
+
+    if (project.status === ProjectStatus.PLANNED) {
+        project.status = ProjectStatus.IN_PROGRESS;
+    }
 
     await project.save();
 

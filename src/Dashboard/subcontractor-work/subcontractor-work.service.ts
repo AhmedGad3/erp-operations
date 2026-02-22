@@ -11,6 +11,7 @@ import { TUser } from '../../DB';
 import { ProjectRepository } from '../../DB/Models/Project/project.repository';
 import { SubcontractorWorkRepository } from 'src/DB/Models/Subcontractor-Work/subcontractor-work.repository';
 import { TSubcontractorWork } from 'src/DB/Models/Subcontractor-Work/subcontractor-work.schema';
+import { ProjectStatus } from 'src/DB/Models/Project/project.schema';
 
 @Injectable()
 export class SubcontractorWorkService {
@@ -153,23 +154,37 @@ export class SubcontractorWorkService {
     }
 
     // ✅ Update Project Subcontractor Costs
-    private async updateProjectSubcontractorCosts(
-        projectId: string | Types.ObjectId,
-    ): Promise<void> {
-        const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
-        const totalAmount = await this.subcontractorWorkRepository.getTotalAmountByProject(id);
+   private async updateProjectSubcontractorCosts(
+    projectId: string | Types.ObjectId,
+): Promise<void> {
+    const id = projectId instanceof Types.ObjectId ? projectId.toString() : projectId;
 
-        const project = await this.projectRepository.findById(id);
-        if (!project) return;
+    const project = await this.projectRepository.findById(id);
+    if (!project) return;
 
-        project.subcontractorCosts = totalAmount;
-        project.totalCosts =
-            (project.materialCosts || 0) +
-            (project.laborCosts || 0) +
-            (project.equipmentCosts || 0) +
-            totalAmount +
-            (project.otherCosts || 0);
+    const lockedStatuses = [
+        ProjectStatus.ON_HOLD,
+        ProjectStatus.COMPLETED,
+        ProjectStatus.CANCELLED,
+        ProjectStatus.CLOSED,
+    ];
 
-        await project.save();
+    if (lockedStatuses.includes(project.status)) return;
+
+    const totalAmount = await this.subcontractorWorkRepository.getTotalAmountByProject(id);
+
+    project.subcontractorCosts = totalAmount;
+    project.totalCosts =
+        (project.materialCosts || 0) +
+        (project.laborCosts || 0) +
+        (project.equipmentCosts || 0) +
+        totalAmount +
+        (project.otherCosts || 0);
+
+    if (project.status === ProjectStatus.PLANNED) {
+        project.status = ProjectStatus.IN_PROGRESS;
     }
+
+    await project.save();
+}
 }
