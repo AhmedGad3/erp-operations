@@ -1,18 +1,16 @@
 {
-    "suppliers": {
-        "created": "Supplier created successfully.",
-        "updated": "Supplier updated successfully.",
-        "deleted": "Supplier deleted successfully.",
-        "activated": "Supplier activated successfully.",
-        "fetched": "Suppliers fetched successfully.",
-        "errors": {
-            "alreadyExists": "Supplier already exists.",
-            "nameExists": "Supplier name already exists.",
-            "codeExists": "Supplier code '{{code}}' already exists.",
-            "notFound": "Supplier not found.",
-            "invalidId": "Invalid supplier ID.",
-            "alreadyActive": "Supplier is already active.",
-            "searchTermRequired": "Search term is required."
-        }
+    "created": "Supplier created successfully.",
+    "updated": "Supplier updated successfully.",
+    "deleted": "Supplier deleted successfully.",
+    "activated": "Supplier activated successfully.",
+    "fetched": "Suppliers fetched successfully.",
+    "errors": {
+        "alreadyExists": "Supplier already exists.",
+        "nameExists": "Supplier name already exists.",
+        "codeExists": "Supplier code '{{code}}' already exists.",
+        "notFound": "Supplier not found.",
+        "invalidId": "Invalid supplier ID.",
+        "alreadyActive": "Supplier is already active.",
+        "searchTermRequired": "Search term is required."
     }
 }
