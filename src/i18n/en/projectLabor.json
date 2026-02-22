@@ -1,0 +1,10 @@
+{
+    "created": "Labor added to project successfully",
+    "updated": "Labor record updated successfully",
+    "deleted": "Labor record deleted successfully",
+    "fetched": "Project labor fetched successfully",
+    "errors": {
+        "notFound": "Labor record not found.",
+        "invalidId": "Invalid labor record ID."
+    }
+}

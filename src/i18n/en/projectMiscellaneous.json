@@ -1,0 +1,10 @@
+{
+    "created": "Miscellaneous expense added successfully",
+    "updated": "Miscellaneous expense updated successfully",
+    "deleted": "Miscellaneous expense deleted successfully",
+    "fetched": "Project miscellaneous expenses fetched successfully",
+    "errors": {
+        "notFound": "Miscellaneous expense not found.",
+        "invalidId": "Invalid miscellaneous expense ID."
+    }
+}

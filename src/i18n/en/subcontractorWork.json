@@ -1,0 +1,11 @@
+{
+    "created": "Subcontractor work added successfully",
+    "updated": "Subcontractor work updated successfully",
+    "deleted": "Subcontractor work deleted successfully",
+    "fetched": "Subcontractor works fetched successfully",
+    "errors": {
+        "notFound": "Subcontractor work record not found.",
+        "invalidId": "Invalid subcontractor work ID.",
+        "alreadyDeleted": "Subcontractor work record is already deleted."
+    }
+}

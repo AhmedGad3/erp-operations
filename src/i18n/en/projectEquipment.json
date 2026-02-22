@@ -1,0 +1,12 @@
+{
+    "created": "Equipment added to project successfully",
+    "updated": "Equipment updated successfully",
+    "deleted": "Equipment deleted successfully",
+    "fetched": "Project equipment fetched successfully",
+    "errors": {
+        "notFound": "Equipment not found.",
+        "invalidId": "Invalid equipment ID.",
+        "assetIdRequired": "Asset ID is required when selecting a company asset.",
+        "assetNotAvailable": "Asset is not available, please choose another asset."
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "created": "Asset created successfully",
+    "updated": "Asset updated successfully",
+    "deleted": "Asset deleted successfully",
+    "activated": "Asset activated successfully",
+    "fetched": "Assets fetched successfully",
+    "errors": {
+        "notFound": "Asset not found.",
+        "invalidId": "Invalid asset ID.",
+        "codeExists": "Asset code '{{code}}' already exists.",
+        "alreadyActive": "Asset is already active.",
+        "invalidStatus": "Invalid asset status."
+    }
+}

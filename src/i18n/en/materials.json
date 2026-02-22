@@ -22,6 +22,8 @@
     "multipleDefaultIssue": "Cannot set more than one default issue unit",
     "alreadyDeleted": "Material already deleted",
     "alreadyActive": "Material is already active",
-    "codeExists": "Code {{code}} already exists"
+    "codeExists": "Code {{code}} already exists",
+    "invalidUnit": "Invalid unit of measure for material '{{material}}'.",
+    "insufficientStock": "Insufficient stock for '{{material}}'. Available: {{available}}, Requested: {{requested}}."
   }
 }

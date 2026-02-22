@@ -22,7 +22,9 @@
     "multipleDefaultIssue": "لا يمكن تعيين أكثر من وحدة افتراضية للصرف",
     "alreadyDeleted": "المستلزم محذوف بالفعل",
     "alreadyActive": "المستلزم مفعل بالفعل",
-    "codeExists": "الكود {{code}} مستخدم بالفعل"
+    "codeExists": "الكود {{code}} مستخدم بالفعل",
+    "invalidUnit": "وحدة القياس غير صالحة للمادة '{{material}}'.",
+    "insufficientStock": "الكمية المتاحة من '​{{material}}' غير كافية. المتاح: {{available}}، المطلوب: {{requested}}."
   
   }
 }

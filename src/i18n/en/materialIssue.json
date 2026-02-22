@@ -1,0 +1,8 @@
+{
+    "created": "Material issue created successfully",
+    "fetched": "Material issues fetched successfully",
+    "errors": {
+        "notFound": "Material issue not found.",
+        "invalidId": "Invalid material issue ID."
+    }
+}

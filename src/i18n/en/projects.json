@@ -12,6 +12,7 @@
     "codeExists": "Code {{code}} already exists",
     "alreadyActive": "Project is already active",
     "alreadyDeleted": "Project already deleted",
-    "cannotDelete": "Project cannot be deleted as it is on hold or in progress"
+    "cannotDelete": "Project cannot be deleted as it is on hold or in progress",
+    "projectLocked": "Project cannot be modified because it is on hold, completed, cancelled, or closed."
   }
 }
