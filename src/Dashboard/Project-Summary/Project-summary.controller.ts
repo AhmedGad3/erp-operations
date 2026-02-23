@@ -4,8 +4,7 @@ import { ProjectSummaryService } from './Project-summary.service';
 import { ProjectSummaryQueryDto } from './dto/Project-summary-query.dto';
 
 @Auth('admin')
-@Controller('projects/summary')
-// @UseGuards(JwtAuthGuard)
+@Controller('admin/projects/summary')
 export class ProjectSummaryController {
     constructor(private readonly projectSummaryService: ProjectSummaryService) {}
 
