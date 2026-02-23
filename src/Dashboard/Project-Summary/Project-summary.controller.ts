@@ -4,7 +4,7 @@ import { ProjectSummaryService } from './Project-summary.service';
 import { ProjectSummaryQueryDto } from './dto/Project-summary-query.dto';
 
 @Auth('admin')
-@Controller('admin/projects/summary')
+@Controller('admin/reports/projects/summary')
 export class ProjectSummaryController {
     constructor(private readonly projectSummaryService: ProjectSummaryService) {}
 

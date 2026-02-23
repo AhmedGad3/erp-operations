@@ -45,6 +45,9 @@ export class ProjectSummaryService {
     }
 
     async getProjectSummary(query: ProjectSummaryQueryDto) {
+        console.log('query received:', query);
+    console.log('projectId:', query.projectId);
+    console.log('isValid:', Types.ObjectId.isValid(query.projectId));
         const { projectId, dateFrom, dateTo } = query;
 
         if (!Types.ObjectId.isValid(projectId)) {
