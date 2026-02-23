@@ -214,7 +214,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
             .aggregate([
                 {
                     $match: {
-                        project: new Types.ObjectId(projectId.toString()),
+                        projectId: new Types.ObjectId(projectId.toString()),
                         isActive: true,
                     },
                 },
@@ -245,7 +245,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         const [data, total] = await Promise.all([
             this.workModel
                 .find(finalFilter)
-                .populate('project', 'name projectNo')
+                .populate('projectId', 'name projectNo')
                 .populate('createdBy', 'name email')
                 .sort({ createdAt: -1 })
                 .skip(skip)
