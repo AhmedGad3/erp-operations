@@ -6,7 +6,7 @@ export class SubcontractorWork {
 
 
     @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
-    project: Types.ObjectId;
+    projectId: Types.ObjectId;
 
     @Prop({ required: true, trim: true })
     contractorName: string;
@@ -64,8 +64,8 @@ SubcontractorWorkSchema.pre('findOneAndUpdate', function (next) {
     next();
 });
 
-SubcontractorWorkSchema.index({ project: 1, contractorName: 1 });
-SubcontractorWorkSchema.index({ isActive: 1, project: 1 });
+SubcontractorWorkSchema.index({ projectId: 1, contractorName: 1 });
+SubcontractorWorkSchema.index({ isActive: 1, projectId: 1 });
 
 SubcontractorWorkSchema.set('toJSON', { virtuals: true });
 SubcontractorWorkSchema.set('toObject', { virtuals: true });

@@ -29,7 +29,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     async findById(id: string | Types.ObjectId): Promise<TSubcontractorWork | null> {
         return this.workModel
             .findById(id as Types.ObjectId)
-            .populate('project', 'name projectNo')
+            .populate('projectId', 'name projectNo')
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
             .exec();
@@ -38,7 +38,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     async findActiveById(id: string | Types.ObjectId): Promise<TSubcontractorWork | null> {
         return this.workModel
             .findOne({ _id: id, isActive: true })
-            .populate('project', 'name projectNo')
+            .populate('projectId', 'name projectNo')
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
             .exec();
@@ -47,7 +47,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     async findByWorkNo(workNo: number): Promise<TSubcontractorWork | null> {
         return this.workModel
             .findOne({ workNo })
-            .populate('project', 'name projectNo')
+            .populate('projectId', 'name projectNo')
             .populate('createdBy', 'name email')
             .exec();
     }
@@ -60,7 +60,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     async findByProject(projectId: string | Types.ObjectId): Promise<TSubcontractorWork[]> {
         return this.workModel
             .find({
-                project: new Types.ObjectId(projectId.toString()),
+                projectId: new Types.ObjectId(projectId.toString()),
                 isActive: true,
             })
             .populate('createdBy', 'name email')
@@ -74,7 +74,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
     ): Promise<TSubcontractorWork[]> {
         return this.workModel
             .find({
-                project: new Types.ObjectId(projectId.toString()),
+                projectId: new Types.ObjectId(projectId.toString()),
                 contractorName: new RegExp(contractorName.trim(), 'i'),
                 isActive: true,
             })
@@ -93,7 +93,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
                 contractorName: new RegExp(contractorName.trim(), 'i'),
                 isActive: true,
             })
-            .populate('project', 'name projectNo')
+            .populate('projectId', 'name projectNo')
             .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
             .exec();
@@ -111,13 +111,13 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         const baseFilter: FilterQuery<TSubcontractorWork> = { isActive: true };
 
         if (projectId) {
-            baseFilter.project = new Types.ObjectId(projectId.toString());
+            baseFilter.projectId = new Types.ObjectId(projectId.toString());
         }
 
         if (!searchTerm || searchTerm.trim().length === 0) {
             return this.workModel
                 .find(baseFilter)
-                .populate('project', 'name projectNo')
+                .populate('projectId', 'name projectNo')
                 .populate('createdBy', 'name email')
                 .sort({ createdAt: -1 })
                 .limit(100)
@@ -136,7 +136,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
                     { notes: searchRegex },
                 ],
             })
-            .populate('project', 'name projectNo')
+            .populate('projectId', 'name projectNo')
             .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
             .exec();
@@ -191,7 +191,7 @@ export class SubcontractorWorkRepository extends DBService<TSubcontractorWork> {
         const matchStage: FilterQuery<TSubcontractorWork> = { isActive: true };
 
         if (projectId) {
-            matchStage.project = new Types.ObjectId(projectId.toString());
+            matchStage.projectId = new Types.ObjectId(projectId.toString());
         }
 
         return this.workModel
