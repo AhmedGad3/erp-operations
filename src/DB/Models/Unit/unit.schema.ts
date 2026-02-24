@@ -54,15 +54,9 @@ export const UnitSchema = SchemaFactory.createForClass(Unit);
 
 export type TUnit = HydratedDocument<Unit> ;
 
-UnitSchema.index({ category: 1, isBase: 1, isActive: 1 });
-UnitSchema.index({ baseUnitId: 1, isActive: 1 });
-
-// Text search index
-UnitSchema.index({ nameAr: 'text', nameEn: 'text', code: 'text' });
-
-UnitSchema.pre('save', function(next) {
+UnitSchema.pre('save', async function(next) {
   if (this.isBase && this.conversionFactor !== 1) {
-    return next(new Error( 'Base unit must have conversionFactor = 1' ));
+    return next(new Error('Base unit must have conversionFactor = 1'));
   }
 
   if (!this.isBase && !this.baseUnitId) {
@@ -73,5 +67,22 @@ UnitSchema.pre('save', function(next) {
     this.baseUnitId = undefined;
   }
 
+  if (!this.isBase && this.baseUnitId) {
+    const baseUnit = await this.model().findById(this.baseUnitId);
+    if (!baseUnit) {
+      return next(new Error('Base unit not found'));
+    }
+    if (baseUnit.category !== this.category) {
+      return next(new Error(`Category mismatch: unit is "${this.category}" but base unit is "${baseUnit.category}"`));
+    }
+  }
+
   next();
 });
+
+UnitSchema.index({ category: 1, isBase: 1, isActive: 1 });
+UnitSchema.index({ baseUnitId: 1, isActive: 1 });
+
+// Text search index
+UnitSchema.index({ nameAr: 'text', nameEn: 'text', code: 'text' });
+

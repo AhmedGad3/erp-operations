@@ -35,83 +35,84 @@ export class StockMovementService {
         }
     }
 
-    async create(data: {
-        materialId: Types.ObjectId;
-        unitId: Types.ObjectId;
-        type: StockMovementType;
-        quantity: number;
-        referenceType: string;
-        referenceId: Types.ObjectId; 
-        lastPurchasePrice?: number;
-        lastPurchaseDate?: Date;
-        unitPrice?: number;
-        projectId?: Types.ObjectId;
-        notes?: string;
-        createdBy: Types.ObjectId;
-    }) {
-        const material = await this.materialRepository.findById(data.materialId);
-        if (!material) {
-            throw new BadRequestException('Material not found');
-        }
-
-        let conversionFactor = 1;
-        if (data.unitId.toString() !== material.baseUnit.toString()) {
-            const altUnit = material.alternativeUnits?.find(
-                u => u.unitId.toString() === data.unitId.toString()
-            );
-            if (!altUnit) {
-                throw new BadRequestException('Invalid unit for this material');
-            }
-            conversionFactor = altUnit.conversionFactor;
-        }
-
-        const quantityInBaseUnit = data.quantity * conversionFactor;
-
-        const lastMovement = await this.stockModel
-            .findOne({ materialId: data.materialId })
-            .sort({ movementDate: -1, _id: -1 });
-
-        const lastBalance = lastMovement?.balanceAfter ?? material.currentStock ?? 0;
-
-        const signedQuantity = this.getSignedQuantity(data.type, quantityInBaseUnit);
-        const balanceAfter = lastBalance + signedQuantity;
-
-        if (balanceAfter < 0 && 
-            ![StockMovementType.ADJUSTMENT_IN, StockMovementType.IN].includes(data.type)
-        ) {
-            throw new BadRequestException('Insufficient stock');
-        }
-
-        const movementNo = await this.counterService.getNext('stock-movement');
-
-        const movement = await this.stockModel.create({
-            ...data,
-            movementNo,
-            balanceAfter,
-            movementDate: new Date(),
-        });
-
-        const materialUpdate: Record<string, any> = {
-            currentStock: balanceAfter,
-            updatedAt: new Date(),
-        };
-
-        if (
-            [StockMovementType.IN, StockMovementType.RETURN_IN].includes(data.type) &&
-            data.unitPrice != null
-        ) {
-            materialUpdate.lastPurchasePrice = data.unitPrice;
-            materialUpdate.lastPurchaseDate = new Date();
-        }
-
-        await this.materialRepository.updateOne(
-            { _id: data.materialId },
-            { $set: materialUpdate }
-        );
-
-        return movement;
+   async create(data: {
+    materialId: Types.ObjectId;
+    unitId: Types.ObjectId;
+    type: StockMovementType;
+    quantity: number;
+    quantityInBase?: number;
+    referenceType: string;
+    referenceId: Types.ObjectId; 
+    lastPurchasePrice?: number;
+    lastPurchaseDate?: Date;
+    unitPrice?: number;
+    projectId?: Types.ObjectId;
+    notes?: string;
+    createdBy: Types.ObjectId;
+}) {
+    const material = await this.materialRepository.findById(data.materialId);
+    if (!material) {
+        throw new BadRequestException('Material not found');
     }
 
+    let conversionFactor = 1;
+    if (data.unitId.toString() !== material.baseUnit.toString()) {
+        const altUnit = material.alternativeUnits?.find(
+            u => u.unitId.toString() === data.unitId.toString()
+        );
+        if (!altUnit) {
+            throw new BadRequestException('Invalid unit for this material');
+        }
+        conversionFactor = altUnit.conversionFactor;
+    }
+
+    // لو quantityInBase موجود استخدمه، لو لأ احسبه
+    const quantityInBaseUnit = data.quantityInBase ?? (data.quantity * conversionFactor);
+
+    const lastMovement = await this.stockModel
+        .findOne({ materialId: data.materialId })
+        .sort({ movementDate: -1, _id: -1 });
+
+    const lastBalance = lastMovement?.balanceAfter ?? material.currentStock ?? 0;
+
+    const signedQuantity = this.getSignedQuantity(data.type, quantityInBaseUnit);
+    const balanceAfter = lastBalance + signedQuantity;
+
+    if (balanceAfter < 0 && 
+        ![StockMovementType.ADJUSTMENT_IN, StockMovementType.IN].includes(data.type)
+    ) {
+        throw new BadRequestException('Insufficient stock');
+    }
+
+    const movementNo = await this.counterService.getNext('stock-movement');
+
+    const movement = await this.stockModel.create({
+        ...data,
+        movementNo,
+        balanceAfter,
+        movementDate: new Date(),
+    });
+
+    const materialUpdate: Record<string, any> = {
+        currentStock: balanceAfter,
+        updatedAt: new Date(),
+    };
+
+    if (
+        [StockMovementType.IN, StockMovementType.RETURN_IN].includes(data.type) &&
+        data.unitPrice != null
+    ) {
+        materialUpdate.lastPurchasePrice = data.unitPrice;
+        materialUpdate.lastPurchaseDate = new Date();
+    }
+
+    await this.materialRepository.updateOne(
+        { _id: data.materialId },
+        { $set: materialUpdate }
+    );
+
+    return movement;
+}
 async createAdjustments(
     data: {
         adjustments: {

@@ -22,8 +22,15 @@ export class Material {
     @Prop({ required: true, trim: true })
     subCategory: string;
 
+    
     @Prop({ required: true, type: Types.ObjectId, ref: 'Unit' })
     baseUnit: Types.ObjectId;
+
+    @Prop({ type: Types.ObjectId, ref: 'Unit' })
+defaultPurchaseUnit?: Types.ObjectId;
+
+@Prop({ type: Types.ObjectId, ref: 'Unit' })
+defaultIssueUnit?: Types.ObjectId;
 
     @Prop({ type: [MaterialUnitSchema], default: [] })
     alternativeUnits: MaterialUnit[];
@@ -33,7 +40,7 @@ export class Material {
     currentStock: number;
 
     @Prop({ type: Number, default: 0, min: 0 })
-    minStockLevel: number;
+    minLevelStock: number;
 
     @Prop({ type: Number, default: 0, min: 0 })
     lastPurchasePrice: number;

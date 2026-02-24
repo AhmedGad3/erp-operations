@@ -17,5 +17,8 @@ export class AlternativeUnitDto {
     @IsOptional()
     isDefaultIssue?: boolean;
 
+    @IsBoolean()
+@IsOptional()
+allowOverride?: boolean;
 
 }

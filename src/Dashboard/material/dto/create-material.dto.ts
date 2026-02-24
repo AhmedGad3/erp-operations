@@ -67,4 +67,12 @@ export class CreateMaterialDto {
     @IsOptional()
     @Transform(({ value }) => value?.trim())
     description?: string
+
+    @IsMongoId()
+@IsOptional()
+defaultPurchaseUnit?: string;
+
+@IsMongoId()
+@IsOptional()
+defaultIssueUnit?: string;
 }

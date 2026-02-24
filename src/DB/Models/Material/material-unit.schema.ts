@@ -13,6 +13,9 @@ export class MaterialUnit {
 
     @Prop({ default: false })
     isDefaultPurchase: boolean;
+    
+    @Prop({ default: false })
+    allowOverride: boolean;
 
     @Prop({ default: false })
     isDefaultIssue: boolean;

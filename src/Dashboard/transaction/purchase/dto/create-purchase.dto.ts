@@ -17,7 +17,7 @@ class PurchaseItemDto {
     @IsNotEmpty()
     materialId: Types.ObjectId;
 
-     @IsMongoId()
+    @IsMongoId()
     @IsNotEmpty()
     unitId: Types.ObjectId;
 
@@ -29,6 +29,11 @@ class PurchaseItemDto {
     @IsNumber()
     @Min(0)
     unitPrice: number;
+
+    @IsNumber()
+    @Min(0.000001)
+    @IsOptional()
+    conversionFactor?: number;
 }
 
 export class CreatePurchaseDto {

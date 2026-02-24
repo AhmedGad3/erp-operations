@@ -23,9 +23,12 @@ export class MaterialRepository extends DBService<TMaterial> {
 
     }
 
-    async findById(id: string | Types.ObjectId): Promise<TMaterial | null> {
-        return this.materialModel.findById(id);
-    }
+   async findById(id: string | Types.ObjectId): Promise<TMaterial | null> {
+    return this.materialModel
+        .findById(id)
+        .populate('alternativeUnits.unitId', 'nameAr nameEn code symbol category conversionFactor isBase')
+        .exec();
+}
 
     async findByName(nameAr?: string, nameEn?: string): Promise<TMaterial | null> {
         if (!nameAr && !nameEn) return null;
@@ -133,8 +136,11 @@ export class MaterialRepository extends DBService<TMaterial> {
             .exec();
     }
     async findActiveById(id: string | Types.ObjectId): Promise<TMaterial | null> {
-        return this.materialModel.findOne({ _id: id, isActive: true }).exec();
-    }
+    return this.materialModel
+        .findOne({ _id: id, isActive: true })
+        .populate('alternativeUnits.unitId', 'nameAr nameEn code symbol category conversionFactor isBase')
+        .exec();
+}
 
     
 }

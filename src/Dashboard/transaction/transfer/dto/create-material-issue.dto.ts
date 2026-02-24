@@ -20,7 +20,7 @@ class MaterialIssueItemDto {
 
     @IsMongoId()
     @IsNotEmpty()
-    unitId: Types.ObjectId;  // ✅ الوحدة
+    unitId: Types.ObjectId;
 
     @IsNumber()
     @Min(0.0001)
@@ -31,6 +31,11 @@ class MaterialIssueItemDto {
     @Min(0)
     @IsNotEmpty()
     unitPrice: number;
+
+    @IsNumber()
+    @Min(0.000001)
+    @IsOptional()
+    conversionFactor?: number;
 }
 
 export class CreateMaterialIssueDto {

@@ -23,70 +23,72 @@ export class MaterialService {
         return I18nContext.current()?.lang || 'ar';
     }
 
-    async createMaterial(createMaterialDto: CreateMaterialDto, user: TUser): Promise<TMaterial> {
-        const lang = this.getLang();
+   async createMaterial(createMaterialDto: CreateMaterialDto, user: TUser): Promise<TMaterial> {
+    const lang = this.getLang();
 
-        const exists = await this.materialRepository.findByName(
-            createMaterialDto.nameAr,
-            createMaterialDto.nameEn
+    const exists = await this.materialRepository.findByName(
+        createMaterialDto.nameAr,
+        createMaterialDto.nameEn
+    );
+    if (exists) {
+        throw new ConflictException(
+            this.i18n.translate('materials.errors.alreadyExists', { lang })
         );
-        if (exists) {
-            throw new ConflictException(
-                this.i18n.translate('materials.errors.alreadyExists', { lang })
-            );
-        }
-
-        const codeExists = await this.materialRepository.findByCode(createMaterialDto.code)
-        if (codeExists) {
-            throw new ConflictException(
-                this.i18n.translate('materials.errors.codeExists', {
-                    lang,
-                    args: { code: createMaterialDto.code },
-                })
-            );
-        }
-         const defaultPurchaseCount = createMaterialDto.alternativeUnits?.filter(
-            (u) => u.isDefaultPurchase,
-          ).length || 0;
-          const defaultIssueCount = createMaterialDto.alternativeUnits?.filter(
-            (u) => u.isDefaultIssue,
-          ).length || 0;
-
-          if (defaultPurchaseCount > 1) {
-            throw new BadRequestException(
-              this.i18n.translate('materials.errors.multipleDefaultPurchase', {
-                lang,
-              }),
-            );
-          }
-
-          if (defaultIssueCount > 1) {
-            throw new BadRequestException(
-              this.i18n.translate('materials.errors.multipleDefaultIssue', { lang }),
-            );
-          }
-
-        const materialData = {
-            ...createMaterialDto,
-            code: createMaterialDto.code.toUpperCase(),
-            baseUnit: new Types.ObjectId(createMaterialDto.baseUnit),
-            createdBy: user._id as Types.ObjectId,
-        }
-
-        if (materialData.alternativeUnits) {
-            materialData.alternativeUnits = materialData.alternativeUnits.map(
-                (unit: any) => ({
-                    ...unit,
-                    unitId: new Types.ObjectId(unit.unitId),
-                }),
-            );
-        }
-
-        const material = await this.materialRepository.create(materialData);
-
-        return material
     }
 
+    const codeExists = await this.materialRepository.findByCode(createMaterialDto.code)
+    if (codeExists) {
+        throw new ConflictException(
+            this.i18n.translate('materials.errors.codeExists', {
+                lang,
+                args: { code: createMaterialDto.code },
+            })
+        );
+    }
+
+    const defaultPurchaseCount = createMaterialDto.alternativeUnits?.filter(
+        (u) => u.isDefaultPurchase,
+    ).length || 0;
+    const defaultIssueCount = createMaterialDto.alternativeUnits?.filter(
+        (u) => u.isDefaultIssue,
+    ).length || 0;
+
+    if (defaultPurchaseCount > 1) {
+        throw new BadRequestException(
+            this.i18n.translate('materials.errors.multipleDefaultPurchase', { lang }),
+        );
+    }
+
+    if (defaultIssueCount > 1) {
+        throw new BadRequestException(
+            this.i18n.translate('materials.errors.multipleDefaultIssue', { lang }),
+        );
+    }
+
+    const materialData: any = {
+        ...createMaterialDto,
+        code: createMaterialDto.code.toUpperCase(),
+        baseUnit: new Types.ObjectId(createMaterialDto.baseUnit),
+        ...(createMaterialDto.defaultPurchaseUnit && {
+            defaultPurchaseUnit: new Types.ObjectId(createMaterialDto.defaultPurchaseUnit)
+        }),
+        ...(createMaterialDto.defaultIssueUnit && {
+            defaultIssueUnit: new Types.ObjectId(createMaterialDto.defaultIssueUnit)
+        }),
+        createdBy: user._id as Types.ObjectId,
+    }
+
+    if (materialData.alternativeUnits) {
+        materialData.alternativeUnits = materialData.alternativeUnits.map(
+            (unit: any) => ({
+                ...unit,
+                unitId: new Types.ObjectId(unit.unitId),
+            }),
+        );
+    }
+
+    return await this.materialRepository.create(materialData);
+}
 
     async findAllMaterials(): Promise<TMaterial[]> {
         return await this.materialRepository.find({  }) as TMaterial[];;
@@ -155,70 +157,82 @@ export class MaterialService {
     }
 
 
-    async updateMaterial(id: string, updateMaterialDto: UpdateMaterialDto, user: TUser): Promise<TMaterial> {
-        const lang = this.getLang();
+   async updateMaterial(id: string, updateMaterialDto: UpdateMaterialDto, user: TUser): Promise<TMaterial> {
+    const lang = this.getLang();
 
-        const material = await this.materialRepository.findById(id);
-
-        if (!material) {
-            throw new NotFoundException(this.i18n.translate('materials.errors.notFound', { lang }));
-        }
-
-        if (updateMaterialDto.nameAr || updateMaterialDto.nameEn) {
-            const duplicate = await this.materialRepository.findOne({
-                _id: { $ne: new Types.ObjectId(id) },
-                $or: [
-                    ...(updateMaterialDto.nameAr ? [{ nameAr: updateMaterialDto.nameAr }] : []),
-                    ...(updateMaterialDto.nameEn ? [{ nameEn: updateMaterialDto.nameEn }] : []),
-                ]
-            });
-
-            if (duplicate) {
-                throw new ConflictException(this.i18n.translate('materials.errors.nameExists', { lang }));
-            }
-
-        }
-        if (updateMaterialDto.baseUnit) {
-            const baseUnit = await this.unitRepository.findById(updateMaterialDto.baseUnit);
-            if (!baseUnit) {
-                throw new NotFoundException(this.i18n.translate('units.errors.notFound', { lang }));
-            }
-            updateMaterialDto.baseUnit = baseUnit.id.toString();
-        }
-
-        if (updateMaterialDto.alternativeUnits && updateMaterialDto.alternativeUnits.length > 0) {
-            for (const altUnit of updateMaterialDto.alternativeUnits) {
-                const unit = await this.unitRepository.findById(altUnit.unitId);
-                if (!unit) {
-                    throw new NotFoundException(
-                        this.i18n.translate('materials.errors.unitNotFound', { lang }),
-                    );
-                }
-            }
-        }
-
-        Object.assign(material, updateMaterialDto);
-        material.updatedBy = user._id as Types.ObjectId;
-
-        if (material.baseUnit && typeof material.baseUnit === 'string') {
-            material.baseUnit = new Types.ObjectId(material.baseUnit);
-        }
-
-        if (material.alternativeUnits) {
-            material.alternativeUnits = material.alternativeUnits.map(
-                (unit: any) => ({
-                    ...unit,
-                    unitId:
-                        typeof unit.unitId === 'string'
-                            ? new Types.ObjectId(unit.unitId)
-                            : unit.unitId,
-                }),
-            );
-        }
-
-        return material.save();
-
+    const material = await this.materialRepository.findById(id);
+    if (!material) {
+        throw new NotFoundException(this.i18n.translate('materials.errors.notFound', { lang }));
     }
+
+    if (updateMaterialDto.nameAr || updateMaterialDto.nameEn) {
+        const duplicate = await this.materialRepository.findOne({
+            _id: { $ne: new Types.ObjectId(id) },
+            $or: [
+                ...(updateMaterialDto.nameAr ? [{ nameAr: updateMaterialDto.nameAr }] : []),
+                ...(updateMaterialDto.nameEn ? [{ nameEn: updateMaterialDto.nameEn }] : []),
+            ]
+        });
+
+        if (duplicate) {
+            throw new ConflictException(this.i18n.translate('materials.errors.nameExists', { lang }));
+        }
+    }
+
+    if (updateMaterialDto.baseUnit) {
+        const baseUnit = await this.unitRepository.findById(updateMaterialDto.baseUnit);
+        if (!baseUnit) {
+            throw new NotFoundException(this.i18n.translate('units.errors.notFound', { lang }));
+        }
+        updateMaterialDto.baseUnit = baseUnit.id.toString();
+    }
+
+    if (updateMaterialDto.defaultPurchaseUnit) {
+        const unit = await this.unitRepository.findById(updateMaterialDto.defaultPurchaseUnit);
+        if (!unit) {
+            throw new NotFoundException(this.i18n.translate('units.errors.notFound', { lang }));
+        }
+    }
+
+    if (updateMaterialDto.defaultIssueUnit) {
+        const unit = await this.unitRepository.findById(updateMaterialDto.defaultIssueUnit);
+        if (!unit) {
+            throw new NotFoundException(this.i18n.translate('units.errors.notFound', { lang }));
+        }
+    }
+
+    if (updateMaterialDto.alternativeUnits && updateMaterialDto.alternativeUnits.length > 0) {
+        for (const altUnit of updateMaterialDto.alternativeUnits) {
+            const unit = await this.unitRepository.findById(altUnit.unitId);
+            if (!unit) {
+                throw new NotFoundException(
+                    this.i18n.translate('materials.errors.unitNotFound', { lang }),
+                );
+            }
+        }
+    }
+
+    Object.assign(material, updateMaterialDto);
+    material.updatedBy = user._id as Types.ObjectId;
+
+    if (material.baseUnit && typeof material.baseUnit === 'string') {
+        material.baseUnit = new Types.ObjectId(material.baseUnit);
+    }
+
+    if (material.alternativeUnits) {
+        material.alternativeUnits = material.alternativeUnits.map(
+            (unit: any) => ({
+                ...unit,
+                unitId:
+                    typeof unit.unitId === 'string'
+                        ? new Types.ObjectId(unit.unitId)
+                        : unit.unitId,
+            }),
+        );
+    }
+
+    return material.save();
+}
 
     async deleteMaterial(id: string, user: TUser) {
 

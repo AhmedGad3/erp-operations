@@ -89,6 +89,38 @@ async createPurchase(dto: CreatePurchaseDto, user: TUser) {
         );
     }
 
+    // ✅ Validate units + حساب quantityInBase لكل item
+    const processedItems = await Promise.all(dto.items.map(async (item) => {
+        const material = await this.materialRepository.findActiveById(item.materialId.toString());
+        if (!material) {
+            throw new NotFoundException(
+                this.i18n.translate('materials.errors.notFound', { lang })
+            );
+        }
+
+        const baseUnitId = material.baseUnit.toString();
+        const unitId = item.unitId.toString();
+
+        let conversionFactor = 1;
+
+        if (unitId !== baseUnitId) {
+            const altUnit = material.alternativeUnits?.find(
+                u => u.unitId.toString() === unitId
+            );
+            if (!altUnit) {
+                throw new BadRequestException(
+                    this.i18n.translate('purchase.errors.invalidUnit', { lang })
+                );
+            }
+            // لو المستخدم بعت conversionFactor استخدمه، لو لأ جيب الافتراضي
+            conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
+        }
+
+        const quantityInBase = item.quantity * conversionFactor;
+
+        return { item, material, conversionFactor, quantityInBase };
+    }));
+
     const invoiceNo = await this.counterService.getNext('purchase-invoice');
 
     const invoiceDate = new Date(dto.invoiceDate);
@@ -105,13 +137,15 @@ async createPurchase(dto: CreatePurchaseDto, user: TUser) {
         supplierInvoiceNo: dto.supplierInvoiceNo,
         invoiceDate,
         dueDate,
-        items: dto.items.map(item => ({
-            materialId: item.materialId ,
-            unitId: item.unitId, // ✅
-            quantity: item.quantity,
+        items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
+            materialId: item.materialId,
+            unitId: item.unitId,
+            quantity: item.quantity,           // الكمية اللي المستخدم دخلها
+            quantityInBase,                    // الكمية بالـ baseUnit
+            conversionFactor,                  // المعامل المستخدم فعلاً
             unitPrice: item.unitPrice,
-            lastPurchasePrice: item.unitPrice ,   
-            lastPurchaseDate: new Date(), 
+            lastPurchasePrice: item.unitPrice,
+            lastPurchaseDate: new Date(),
             total: item.quantity * item.unitPrice,
         })),
         totalAmount,
@@ -122,13 +156,13 @@ async createPurchase(dto: CreatePurchaseDto, user: TUser) {
         createdBy: user._id,
     });
 
-    // ✅ Stock IN
-    for (const item of dto.items) {
+    // ✅ Stock IN — بالـ quantityInBase
+    for (const { item, quantityInBase } of processedItems) {
         await this.stockMovementService.create({
-            materialId: new Types.ObjectId(item.materialId)  ,
-            unitId:  new Types.ObjectId(item.unitId), // ✅
+            materialId: new Types.ObjectId(item.materialId),
+            unitId: new Types.ObjectId(item.unitId),
             type: StockMovementType.IN,
-            quantity: item.quantity,
+            quantity: quantityInBase,          // ← المهم هنا
             unitPrice: item.unitPrice,
             lastPurchasePrice: item.unitPrice,
             lastPurchaseDate: new Date(),
@@ -328,9 +362,9 @@ async createPurchase(dto: CreatePurchaseDto, user: TUser) {
 async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
     const lang = this.getLang();
 
-    // ✅ Validate stock availability
-    for (const item of dto.items) {
-        const material = await this.materialRepository.findById(item.materialId);
+    // ✅ Validate + حساب quantityInBase لكل item
+    const processedItems = await Promise.all(dto.items.map(async (item) => {
+        const material = await this.materialRepository.findActiveById(item.materialId.toString());
 
         if (!material) {
             throw new NotFoundException(
@@ -338,42 +372,44 @@ async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
             );
         }
 
-        // 🧮 Convert to base unit for validation
+        const baseUnitId = material.baseUnit.toString();
+        const unitId = item.unitId.toString();
+
         let conversionFactor = 1;
-        if (item.unitId.toString() !== material.baseUnit.toString()) {
+
+        if (unitId !== baseUnitId) {
             const altUnit = material.alternativeUnits?.find(
-                u => u.unitId.toString() === item.unitId.toString()
+                u => u.unitId.toString() === unitId
             );
             if (!altUnit) {
                 throw new BadRequestException(
                     this.i18n.translate('purchase.errors.invalidUnit', { lang })
                 );
             }
-            conversionFactor = altUnit.conversionFactor;
+            conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
         }
 
-        const quantityInBaseUnit = item.quantity * conversionFactor;
+        const quantityInBase = item.quantity * conversionFactor;
 
-        if (material.currentStock < quantityInBaseUnit) {
+        if (material.currentStock < quantityInBase) {
             throw new BadRequestException(
                 this.i18n.translate('purchase.errors.insufficientStock', {
                     lang,
                     args: {
                         material: material.nameAr,
                         available: material.currentStock,
-                        requested: quantityInBaseUnit,
+                        requested: quantityInBase,
                     },
                 }),
             );
         }
-    }
 
-    const items = dto.items.map(i => ({
-        ...i,
-        total: i.quantity * i.unitPrice,
+        return { item, conversionFactor, quantityInBase };
     }));
 
-    const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+    const totalAmount = processedItems.reduce(
+        (sum, { item }) => sum + item.quantity * item.unitPrice, 0
+    );
 
     const returnNo = await this.counterService.getNext('purchase-return');
 
@@ -381,7 +417,15 @@ async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
         returnNo,
         supplierId: dto.supplierId,
         returnDate: dto.returnDate,
-        items,
+        items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
+            materialId: item.materialId,
+            unitId: item.unitId,
+            quantity: item.quantity,
+            quantityInBase,
+            conversionFactor,
+            unitPrice: item.unitPrice,
+            total: item.quantity * item.unitPrice,
+        })),
         totalAmount,
         notes: dto.notes,
         createdBy: user._id,
@@ -401,13 +445,13 @@ async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
         createdBy: user._id as Types.ObjectId,
     });
 
-    // 🔥 3️⃣ Stock OUT
-    for (const item of items) {
+    // 🔥 3️⃣ Stock OUT — بالـ quantityInBase
+    for (const { item, quantityInBase } of processedItems) {
         await this.stockMovementService.create({
-            materialId: item.materialId,
-            unitId: item.unitId, // ✅
+            materialId: new Types.ObjectId(item.materialId),
+            unitId: new Types.ObjectId(item.unitId),
             type: StockMovementType.RETURN_OUT,
-            quantity: item.quantity,
+            quantity: quantityInBase,          // ← المهم هنا
             unitPrice: item.unitPrice,
             referenceType: 'PurchaseReturn',
             referenceId: purchaseReturn._id,

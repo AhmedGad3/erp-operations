@@ -69,6 +69,9 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
         materialId: Types.ObjectId;
         unitId: Types.ObjectId;
         quantity: number;
+        quantityInBase: number;
+        conversionFactor: number;
+        lastPurchasePrice: number;
         unitPrice: number;
         discountPercent: number;
         discountAmount: number;
@@ -102,19 +105,20 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
                     }),
                 );
             }
-            conversionFactor = altUnit.conversionFactor;
+            // لو المستخدم بعت conversionFactor استخدمه، لو لأ جيب الافتراضي
+            conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
         }
 
         // ── Stock validation ──
-        const quantityInBaseUnit = item.quantity * conversionFactor;
-        if (material.currentStock < quantityInBaseUnit) {
+        const quantityInBase = item.quantity * conversionFactor;
+        if (material.currentStock < quantityInBase) {
             throw new BadRequestException(
                 this.i18n.translate('materials.errors.insufficientStock', {
                     lang,
                     args: {
                         material: material.nameAr,
                         available: material.currentStock,
-                        requested: quantityInBaseUnit,
+                        requested: quantityInBase,
                     },
                 }),
             );
@@ -135,10 +139,13 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
         grandTotalCost  += totalCost;
 
         processedItems.push({
-            materialId: new Types.ObjectId(item.materialId),
-            unitId:     new Types.ObjectId(item.unitId),
-            quantity:   item.quantity,
-            unitPrice:  item.unitPrice,
+            materialId:      new Types.ObjectId(item.materialId),
+            unitId:          new Types.ObjectId(item.unitId),
+            quantity:        item.quantity,
+            quantityInBase,
+            conversionFactor,
+            lastPurchasePrice: lastPurchasePrice,
+            unitPrice:       item.unitPrice,
             discountPercent: Math.round(discountPercent * 100) / 100,
             discountAmount:  Math.round(discountAmount  * 100) / 100,
             totalPrice,
@@ -178,13 +185,14 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
 
     await project.save();
 
-    // 5️⃣ Stock movements
+    // 5️⃣ Stock movements — بالـ quantityInBase
     for (const item of processedItems) {
         await this.stockMovementService.create({
             materialId:    item.materialId,
             unitId:        item.unitId,
             type:          StockMovementType.PROJECT_ISSUE,
             quantity:      item.quantity,
+            quantityInBase: item.quantityInBase,  // ← المهم هنا
             unitPrice:     item.unitPrice,
             referenceType: 'MaterialIssue',
             referenceId:   materialIssue._id as Types.ObjectId,
@@ -195,7 +203,6 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
 
     return { materialIssue };
 }
-
 
     async findAll() {
         return this.materialIssueModel
