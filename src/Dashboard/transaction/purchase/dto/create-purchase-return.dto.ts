@@ -12,11 +12,11 @@ import {
 import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
 
-class PurchaseReturnItemDto {
+export class PurchaseReturnItemDto {
     @IsMongoId()
     materialId: Types.ObjectId;
 
-     @IsMongoId()
+    @IsMongoId()
     @IsNotEmpty()
     unitId: Types.ObjectId;
 
@@ -27,6 +27,11 @@ class PurchaseReturnItemDto {
     @IsNumber()
     @Min(0)
     unitPrice: number;
+
+    @IsNumber()
+    @Min(0.000001)
+    @IsOptional()
+    conversionFactor?: number;
 }
 
 export class CreatePurchaseReturnDto {
