@@ -3,8 +3,6 @@ import { AlternativeUnitDto } from "./alternative-unit.dto";
 import { ArrayMinSize, IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Length, Matches, Min, ValidateNested } from "class-validator";
 import { Transform, Type } from "class-transformer";
 
-
-
 export class CreateMaterialDto {
 
     @IsString()
@@ -12,16 +10,16 @@ export class CreateMaterialDto {
     @Transform(({ value }) => value?.trim())
     nameAr: string;
 
-
     @IsString()
     @IsNotEmpty()
     @Transform(({ value }) => value?.trim())
     nameEn: string;
 
+    // ✅ بقت optional لأن الفرونت ممكن يبعت undefined
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @Transform(({ value }) => value?.trim())
-    subCategory: string;
+    subCategory?: string;
 
     @IsString()
     @IsNotEmpty()
@@ -35,8 +33,6 @@ export class CreateMaterialDto {
     @IsEnum(MainCategory)
     @Transform(({ value }) => value?.trim())
     mainCategory: MainCategory;
-
-
 
     @IsMongoId()
     @IsNotEmpty()
@@ -61,18 +57,18 @@ export class CreateMaterialDto {
 
     @IsDateString()
     @IsOptional()
-    lastPurchasedDate?: Date
+    lastPurchasedDate?: Date;
 
     @IsString()
     @IsOptional()
     @Transform(({ value }) => value?.trim())
-    description?: string
+    description?: string;
 
     @IsMongoId()
-@IsOptional()
-defaultPurchaseUnit?: string;
+    @IsOptional()
+    defaultPurchaseUnit?: string;
 
-@IsMongoId()
-@IsOptional()
-defaultIssueUnit?: string;
+    @IsMongoId()
+    @IsOptional()
+    defaultIssueUnit?: string;
 }
