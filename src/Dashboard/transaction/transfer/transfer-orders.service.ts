@@ -51,6 +51,8 @@ private isProjectLocked(status: ProjectStatus): boolean {
 async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
     const lang = this.getLang();
 
+    const money = (val: number) => Number(val.toFixed(3));
+
     // 1️⃣ Validate project
     const project = await this.projectModel.findById(dto.projectId);
     if (!project || !project.isActive) {
@@ -105,12 +107,11 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
                     }),
                 );
             }
-            // لو المستخدم بعت conversionFactor استخدمه، لو لأ جيب الافتراضي
             conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
         }
 
-        // ── Stock validation ──
-        const quantityInBase = item.quantity * conversionFactor;
+        const quantityInBase = money(item.quantity * conversionFactor);
+
         if (material.currentStock < quantityInBase) {
             throw new BadRequestException(
                 this.i18n.translate('materials.errors.insufficientStock', {
@@ -124,19 +125,22 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
             );
         }
 
-        // ── Discount calculation ──
-        const lastPurchasePrice = material.lastPurchasePrice ?? 0;
-        const discountAmount    = lastPurchasePrice - item.unitPrice;
-        const discountPercent   = lastPurchasePrice > 0
-            ? (discountAmount / lastPurchasePrice) * 100
+        const lastPurchasePrice = money(material.lastPurchasePrice ?? 0);
+        const unitPrice         = money(item.unitPrice);
+
+        const discountAmountRaw  = lastPurchasePrice - unitPrice;
+        const discountPercentRaw = lastPurchasePrice > 0
+            ? (discountAmountRaw / lastPurchasePrice) * 100
             : 0;
 
-        // ── Item totals ──
-        const totalPrice = item.quantity * item.unitPrice;
-        const totalCost  = item.quantity * lastPurchasePrice;
+        const discountAmount  = money(discountAmountRaw);
+        const discountPercent = money(discountPercentRaw);
 
-        grandTotalPrice += totalPrice;
-        grandTotalCost  += totalCost;
+        const totalPrice = money(item.quantity * unitPrice);
+        const totalCost  = money(item.quantity * lastPurchasePrice);
+
+        grandTotalPrice = money(grandTotalPrice + totalPrice);
+        grandTotalCost  = money(grandTotalCost  + totalCost);
 
         processedItems.push({
             materialId:      new Types.ObjectId(item.materialId),
@@ -144,16 +148,19 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
             quantity:        item.quantity,
             quantityInBase,
             conversionFactor,
-            lastPurchasePrice: lastPurchasePrice,
-            unitPrice:       item.unitPrice,
-            discountPercent: Math.round(discountPercent * 100) / 100,
-            discountAmount:  Math.round(discountAmount  * 100) / 100,
+            lastPurchasePrice,
+            unitPrice,
+            discountPercent,
+            discountAmount,
             totalPrice,
             totalCost,
         });
     }
 
-    const totalDiscount = grandTotalCost - grandTotalPrice;
+    const totalDiscount = Math.max(
+        0,
+        money(grandTotalCost - grandTotalPrice)
+    );
 
     // 3️⃣ Create Material Issue
     const issueNo = await this.counterService.getNext('material-issue');
@@ -164,20 +171,21 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
         clientId:   new Types.ObjectId(project.clientId),
         issueDate:  new Date(dto.issueDate),
         items:      processedItems,
-        totalPrice:    grandTotalPrice,
-        totalCost:     grandTotalCost,
+        totalPrice: grandTotalPrice,
+        totalCost:  grandTotalCost,
         totalDiscount,
         notes:      dto.notes,
         createdBy:  user._id as Types.ObjectId,
     });
 
     // 4️⃣ Update project costs
-    project.materialCosts += grandTotalPrice;
-    project.totalCosts =
+    project.materialCosts = money(project.materialCosts + grandTotalPrice);
+    project.totalCosts    = money(
         project.materialCosts  +
         project.laborCosts     +
         project.equipmentCosts +
-        project.otherCosts;
+        project.otherCosts
+    );
 
     if (project.status === ProjectStatus.PLANNED) {
         project.status = ProjectStatus.IN_PROGRESS;
@@ -185,19 +193,19 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
 
     await project.save();
 
-    // 5️⃣ Stock movements — بالـ quantityInBase
+    // 5️⃣ Stock movements
     for (const item of processedItems) {
         await this.stockMovementService.create({
-            materialId:    item.materialId,
-            unitId:        item.unitId,
-            type:          StockMovementType.PROJECT_ISSUE,
-            quantity:      item.quantity,
-            quantityInBase: item.quantityInBase,  // ← المهم هنا
-            unitPrice:     item.unitPrice,
-            referenceType: 'MaterialIssue',
-            referenceId:   materialIssue._id as Types.ObjectId,
-            projectId:     new Types.ObjectId(dto.projectId),
-            createdBy:     user._id as Types.ObjectId,
+            materialId:     item.materialId,
+            unitId:         item.unitId,
+            type:           StockMovementType.PROJECT_ISSUE,
+            quantity:       item.quantity,
+            quantityInBase: item.quantityInBase,
+            unitPrice:      item.unitPrice,
+            referenceType:  'MaterialIssue',
+            referenceId:    materialIssue._id as Types.ObjectId,
+            projectId:      new Types.ObjectId(dto.projectId),
+            createdBy:      user._id as Types.ObjectId,
         });
     }
 
