@@ -18,8 +18,7 @@ import { AssetInvoiceRepository } from 'src/DB/Models/AssetInvoice/Asset-Invoice
     providers: [
         AssetInvoiceService,
         AssetInvoiceRepository,
-        AssetRepository,
-        CounterService,
+        AssetRepository
     ],
     exports: [AssetInvoiceService, AssetInvoiceRepository],
 })
