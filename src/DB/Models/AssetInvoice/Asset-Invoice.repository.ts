@@ -32,9 +32,9 @@ export class AssetInvoiceRepository extends DBService<TAssetInvoice> {
             .exec();
     }
 
-    async findByAssetId(assetId: string | Types.ObjectId): Promise<TAssetInvoice | null> {
+  async findByAssetId(assetId: string | Types.ObjectId): Promise<TAssetInvoice | null> {
     return this.invoiceModel
-        .findOne({ asset: assetId, isActive: true })
+        .findOne({ asset: new Types.ObjectId(assetId), isActive: true })
         .populate('asset')
         .populate('createdBy', 'name email')
         .populate('updatedBy', 'name email')
