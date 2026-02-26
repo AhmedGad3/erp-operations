@@ -25,11 +25,7 @@ export class Asset {
     @Prop({ required: true, trim: true })
     assetTypeEn: string;
 
-   @Prop({ type: Date })
-purchaseDate: Date;
-
-@Prop({ type: Number, min: 0 })
-purchasePrice: number;
+  
 
     @Prop({
         type: String,

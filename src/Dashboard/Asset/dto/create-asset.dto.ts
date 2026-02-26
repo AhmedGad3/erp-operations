@@ -29,14 +29,7 @@ export class CreateAssetDto {
     assetTypeEn: string;
 
 
-    @Type(() => Date)
-@IsDate()
-    purchaseDate: Date;
-
-
-    @IsNumber()
-    @Min(0)
-    purchasePrice: number;
+    
 
     @IsEnum(AssetStatus)
     @IsOptional()

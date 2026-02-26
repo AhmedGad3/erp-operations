@@ -10,14 +10,12 @@ export class CounterService {
         private counterModel: Model<CounterDocument>,
     ) { }
 
-    /**
-     * ⚠️ WARNING: NO SESSION - Development only
-     */
+   
     async getNext(name: string): Promise<number> {
         const counter = await this.counterModel.findOneAndUpdate(
             { key: name },
             { $inc: { seq: 1 } },
-            { new: true, upsert: true }, // ❌ No session
+            { new: true, upsert: true },
         );
 
         return counter.seq;
