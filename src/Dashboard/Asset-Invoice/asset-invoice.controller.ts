@@ -69,6 +69,15 @@ export class AssetInvoiceController {
         };
     }
 
+    @Get('by-asset/:assetId')
+async findByAssetId(@Param('assetId') assetId: string) {
+    const result = await this.assetInvoiceService.findByAssetId(assetId);
+    return {
+        result,
+        message: 'Invoice fetched successfully',
+    };
+}
+
     // ✅ Get Invoice by ID
     @Get(':id')
     async findOne(@Param('id') id: string) {

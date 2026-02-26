@@ -124,4 +124,17 @@ export class AssetInvoiceService {
     async getTotalAmount(startDate?: Date, endDate?: Date): Promise<number> {
         return this.assetInvoiceRepo.getTotalAmount(startDate, endDate);
     }
+
+    // ✅ Find By Asset ID
+async findByAssetId(assetId: string): Promise<TAssetInvoice | null> {
+    const lang = this.getLang();
+
+    if (!Types.ObjectId.isValid(assetId)) {
+        throw new BadRequestException(
+            this.i18n.translate('asset_invoices.errors.invalidId', { lang }),
+        );
+    }
+
+    return this.assetInvoiceRepo.findByAssetId(assetId);
+}
 }

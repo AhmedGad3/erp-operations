@@ -22,6 +22,7 @@ export class AssetInvoiceRepository extends DBService<TAssetInvoice> {
             .exec();
     }
 
+    
     async findActiveById(id: string | Types.ObjectId): Promise<TAssetInvoice | null> {
         return this.invoiceModel
             .findOne({ _id: id, isActive: true })
@@ -32,11 +33,13 @@ export class AssetInvoiceRepository extends DBService<TAssetInvoice> {
     }
 
     async findByAssetId(assetId: string | Types.ObjectId): Promise<TAssetInvoice | null> {
-        return this.invoiceModel
-            .findOne({ asset: assetId, isActive: true })
-            .populate('asset')
-            .exec();
-    }
+    return this.invoiceModel
+        .findOne({ asset: assetId, isActive: true })
+        .populate('asset')
+        .populate('createdBy', 'name email')
+        .populate('updatedBy', 'name email')
+        .exec();
+}
 
     async findAllActive(): Promise<TAssetInvoice[]> {
         return this.invoiceModel
