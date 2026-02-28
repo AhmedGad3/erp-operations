@@ -1,4 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Request } from 'express';
+
+type AuthenticatedRequest = Request & { user: { _id: string } };
 import { AuthService } from './auth.service';
 import { LoginDto, SignupDto, VerifyLoginOtpDto, VerifyOtpDto } from './dto';
 import { Auth } from '../Common';
@@ -6,6 +9,12 @@ import { Auth } from '../Common';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Auth()
+  @Get('me')
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    return this.authService.getProfile(req.user._id);
+  }
 
   @Auth('admin')
   @Post('signup')

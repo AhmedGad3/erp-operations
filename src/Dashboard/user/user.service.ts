@@ -5,25 +5,21 @@ import {
 } from '@nestjs/common';
 
 
-  import {  hash, sendEmail, TokenService } from '../../Common';
+  import { hash, sendEmail } from '../../Common';
   import { TUser, UserRepository } from '../../DB';
   import { CreateUserDto, UpdateUserDto } from './dto/index';
-  import { otpRepository } from '../../DB/Models/Otp/otp.repository';
 import { Types } from 'mongoose';
-import { create } from 'domain';
   
   @Injectable()
   export class UserService {
     constructor(
       private readonly userRepository: UserRepository,
-      private tokenService: TokenService,
-      private readonly otpRepository: otpRepository,
     ) {}
   
     async createService(createUserDto: CreateUserDto, user: TUser): Promise<TUser> {
       const { name, email, password,role } = createUserDto;
   
-      // تحقق إذا الإيميل موجود مسبقًا
+      // ØªØ­Ù‚Ù‚ Ø¥Ø°Ø§ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ù…ÙˆØ¬ÙˆØ¯ Ù…Ø³Ø¨Ù‚Ù‹Ø§
       const existingUser = await this.userRepository.findByEmail(email);
       if (existingUser) {
         throw new ConflictException('User already exists');
@@ -34,7 +30,7 @@ import { create } from 'domain';
         email,
         password: hash(password),
         role,
-        createdBy:user.id
+        createdBy: user._id as Types.ObjectId
       });
 
       await sendEmail({
@@ -108,7 +104,7 @@ async softDeleteUser(id: string, user: TUser) {
     throw new ConflictException('You cannot delete yourself');
   }
 
-  const deletedUser = await this.userRepository.softDelete(id, user.id);
+  const deletedUser = await this.userRepository.softDelete(id, user);
   return deletedUser as TUser;
 }
 
@@ -128,7 +124,7 @@ async activateUser(id: string, user: TUser) {
     throw new ConflictException('User already active');
   }
 
-  const activatedUser = await this.userRepository.activateUser(id, user.id);
+  const activatedUser = await this.userRepository.activateUser(id, user);
   return activatedUser as TUser;
 }
   

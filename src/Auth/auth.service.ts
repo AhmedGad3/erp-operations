@@ -27,7 +27,7 @@ export class AuthService {
     code: string,
     type: otpType,
   ): Promise<void> {
-    // Ø§Ø­Ø°Ù Ø£ÙŠ OTP Ù‚Ø¯ÙŠÙ… Ù„Ù†ÙØ³ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ ÙˆØ§Ù„Ù†ÙˆØ¹
+    // Ã˜Â§Ã˜Â­Ã˜Â°Ã™Â Ã˜Â£Ã™Å  OTP Ã™â€šÃ˜Â¯Ã™Å Ã™â€¦ Ã™â€žÃ™â€ Ã™ÂÃ˜Â³ Ã˜Â§Ã™â€žÃ˜Â¥Ã™Å Ã™â€¦Ã™Å Ã™â€ž Ã™Ë†Ã˜Â§Ã™â€žÃ™â€ Ã™Ë†Ã˜Â¹
     await this.otpRepository.deleteMany({ email, otp_type: type });
 
     const hashedCode = hash(code);
@@ -55,24 +55,32 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
-    // Ø­Ø°Ù Ø§Ù„Ù€ OTP Ø¨Ø¹Ø¯ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…
+    // Ã˜Â­Ã˜Â°Ã™Â Ã˜Â§Ã™â€žÃ™â‚¬ OTP Ã˜Â¨Ã˜Â¹Ã˜Â¯ Ã˜Â§Ã™â€žÃ˜Â§Ã˜Â³Ã˜ÂªÃ˜Â®Ã˜Â¯Ã˜Â§Ã™â€¦
     await this.otpRepository.deleteOne({ _id: otpEntry._id });
+  }
+  async getProfile(userId: string) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 
   async signupService(signupDto: SignupDto): Promise<{ message: string }> {
     const { name, email } = signupDto;
 
-    // ØªØ­Ù‚Ù‚ Ø¥Ø°Ø§ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ù…ÙˆØ¬ÙˆØ¯ Ù…Ø³Ø¨Ù‚Ù‹Ø§
+    // Ã˜ÂªÃ˜Â­Ã™â€šÃ™â€š Ã˜Â¥Ã˜Â°Ã˜Â§ Ã˜Â§Ã™â€žÃ˜Â¥Ã™Å Ã™â€¦Ã™Å Ã™â€ž Ã™â€¦Ã™Ë†Ã˜Â¬Ã™Ë†Ã˜Â¯ Ã™â€¦Ã˜Â³Ã˜Â¨Ã™â€šÃ™â€¹Ã˜Â§
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
 
-    // ØªÙˆÙ„ÙŠØ¯ ÙˆØ­ÙØ¸ OTP
+    // Ã˜ÂªÃ™Ë†Ã™â€žÃ™Å Ã˜Â¯ Ã™Ë†Ã˜Â­Ã™ÂÃ˜Â¸ OTP
     const code = this.generateOtp();
     await this.saveOtp(email, code, otpType.CONFIRM_EMAIL);
 
-    // Ø¥Ø±Ø³Ø§Ù„ OTP Ù„Ù„Ù…Ø¯ÙŠØ±
+    // Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž OTP Ã™â€žÃ™â€žÃ™â€¦Ã˜Â¯Ã™Å Ã˜Â±
     await sendEmail({
       to: process.env.EMAIL,
       subject: 'New Account Registration Request',
@@ -97,16 +105,16 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpDto) {
     const { name, email, password, code } = dto;
 
-    // ØªØ­Ù‚Ù‚ Ù…Ù† ØµØ­Ø© OTP
+    // Ã˜ÂªÃ˜Â­Ã™â€šÃ™â€š Ã™â€¦Ã™â€  Ã˜ÂµÃ˜Â­Ã˜Â© OTP
     await this.validateOtp(email, code, otpType.CONFIRM_EMAIL);
 
-    // ØªØ­Ù‚Ù‚ Ø¥Ø°Ø§ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ù…ÙˆØ¬ÙˆØ¯ (Ø­Ù…Ø§ÙŠØ© Ù…Ø²Ø¯ÙˆØ¬Ø©)
+    // Ã˜ÂªÃ˜Â­Ã™â€šÃ™â€š Ã˜Â¥Ã˜Â°Ã˜Â§ Ã˜Â§Ã™â€žÃ˜Â¥Ã™Å Ã™â€¦Ã™Å Ã™â€ž Ã™â€¦Ã™Ë†Ã˜Â¬Ã™Ë†Ã˜Â¯ (Ã˜Â­Ã™â€¦Ã˜Â§Ã™Å Ã˜Â© Ã™â€¦Ã˜Â²Ã˜Â¯Ã™Ë†Ã˜Â¬Ã˜Â©)
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
 
-    // Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…
+    // Ã˜Â¥Ã™â€ Ã˜Â´Ã˜Â§Ã˜Â¡ Ã˜Â§Ã™â€žÃ™â€¦Ã˜Â³Ã˜ÂªÃ˜Â®Ã˜Â¯Ã™â€¦
     const createdUser = await this.userRepository.create({
       name,
       email,
@@ -125,11 +133,11 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // ØªÙˆÙ„ÙŠØ¯ ÙˆØ­ÙØ¸ OTP
+    // Ã˜ÂªÃ™Ë†Ã™â€žÃ™Å Ã˜Â¯ Ã™Ë†Ã˜Â­Ã™ÂÃ˜Â¸ OTP
     const code = this.generateOtp();
     await this.saveOtp(email, code, otpType.LOGIN_OTP);
 
-    // Ø¥Ø±Ø³Ø§Ù„ OTP Ù„Ù„Ù…Ø³ØªØ®Ø¯Ù…
+    // Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž OTP Ã™â€žÃ™â€žÃ™â€¦Ã˜Â³Ã˜ÂªÃ˜Â®Ã˜Â¯Ã™â€¦
     await sendEmail({
       to: email,
       from: process.env.EMAIL,
@@ -145,16 +153,16 @@ export class AuthService {
 
   // Step 2: Verify OTP and login
   async verifyLoginOtp(email: string, code: string) {
-    // ØªØ­Ù‚Ù‚ Ù…Ù† ØµØ­Ø© OTP
+    // Ã˜ÂªÃ˜Â­Ã™â€šÃ™â€š Ã™â€¦Ã™â€  Ã˜ÂµÃ˜Â­Ã˜Â© OTP
     await this.validateOtp(email, code, otpType.LOGIN_OTP);
 
-    // Ø¬Ù„Ø¨ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…
+    // Ã˜Â¬Ã™â€žÃ˜Â¨ Ã˜Â¨Ã™Å Ã˜Â§Ã™â€ Ã˜Â§Ã˜Âª Ã˜Â§Ã™â€žÃ™â€¦Ã˜Â³Ã˜ÂªÃ˜Â®Ã˜Â¯Ã™â€¦
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // ØªÙˆÙ„ÙŠØ¯ Ø§Ù„Ù€ Token
+    // Ã˜ÂªÃ™Ë†Ã™â€žÃ™Å Ã˜Â¯ Ã˜Â§Ã™â€žÃ™â‚¬ Token
     const token = this.tokenService.sign(
       { _id: user._id },
       { secret: process.env.JWT_SECRET, expiresIn: '1d' },
