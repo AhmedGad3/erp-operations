@@ -18,19 +18,19 @@ import { UpdateAssetStatusDto } from './dto/update-asset-status.dto';
 import { Auth } from '../../Common';
 import { AssetStatus } from '../../DB/Models/Asset/asset.schema';
 
-@Auth('admin')
 @Controller('/admin/assets')
 export class AssetController {
     constructor(
         private readonly assetService: AssetService,
         private readonly i18n: I18nService,
     ) {}
-
+    
     private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
     }
-
+    
     // ✅ Create Asset
+    @Auth('admin')
     @Post()
     async createAsset(
         @Body() createAssetDto: CreateAssetDto,
@@ -46,7 +46,7 @@ export class AssetController {
             message: this.i18n.translate('assets.created', { lang }),
         };
     }
-
+    
     // ✅ Get All Assets
     @Get()
     async findAllAssets() {
@@ -57,8 +57,9 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Get Active Assets
+    @Auth('admin')
     @Get('active')
     async findActiveAssets() {
         const lang = this.getLang();
@@ -68,7 +69,7 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Get Available Assets
     @Get('available')
     async findAvailableAssets() {
@@ -79,7 +80,7 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Get Assets by Status
     @Get('status/:status')
     async findByStatus(@Param('status') status: AssetStatus) {
@@ -90,7 +91,7 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Search Assets
     @Get('search')
     async searchAssets(@Query('q') searchTerm: string) {
@@ -101,7 +102,7 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Get Asset by ID
     @Get(':id')
     async findById(@Param('id') assetId: string) {
@@ -112,8 +113,9 @@ export class AssetController {
             message: this.i18n.translate('assets.fetched', { lang }),
         };
     }
-
+    
     // ✅ Update Asset
+    @Auth('admin')
     @Put(':id')
     async updateAsset(
         @Param('id') assetId: string,
@@ -131,8 +133,9 @@ export class AssetController {
             message: this.i18n.translate('assets.updated', { lang }),
         };
     }
-
+    
     // ✅ Update Asset Status
+    @Auth('admin')
     @Patch(':id/status')
     async updateStatus(
         @Param('id') assetId: string,
@@ -150,8 +153,9 @@ export class AssetController {
             message: this.i18n.translate('assets.statusUpdated', { lang }),
         };
     }
-
+    
     // ✅ Delete Asset (Soft Delete)
+    @Auth('admin')
     @Delete(':id')
     async deleteAsset(@Param('id') assetId: string, @Req() req: Request) {
         const lang = this.getLang();
@@ -161,8 +165,9 @@ export class AssetController {
             message: this.i18n.translate('assets.deleted', { lang }),
         };
     }
-
+    
     // ✅ Activate Asset
+    @Auth('admin')
     @Patch(':id/activate')
     async activateAsset(@Param('id') assetId: string, @Req() req: Request) {
         const lang = this.getLang();

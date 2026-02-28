@@ -16,19 +16,19 @@ export class AuthController {
     return this.authService.getProfile(req.user._id);
   }
 
-  @Auth('admin')
-  @Post('signup')
-  async signup(@Body() signupDto: SignupDto) {
-    const result = await this.authService.signupService(signupDto);
-    return {
-      message: result.message,
-    };
-  }
+  // @Auth('admin')
+  // @Post('signup')
+  // async signup(@Body() signupDto: SignupDto) {
+  //   const result = await this.authService.signupService(signupDto);
+  //   return {
+  //     message: result.message,
+  //   };
+  // }
 
-  @Post('verify-signup')
-  async verifySignup(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto);
-  }
+  // @Post('verify-signup')
+  // async verifySignup(@Body() dto: VerifyOtpDto) {
+  //   return this.authService.verifyOtp(dto);
+  // }
 
   @Post('login')
   async requestLogin(@Body() loginDto: LoginDto) {
