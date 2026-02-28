@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { compare, hash, sendEmail, TokenService } from '../Common';
-import { TUser, UserRepository } from '../DB';
-import { LoginDto, SignupDto, VerifyOtpDto } from './dto/index';
+import { UserRepository } from '../DB';
+import { SignupDto, VerifyOtpDto } from './dto/index';
 import { otpRepository } from '../DB/Models/Otp/otp.repository';
 import { otpType } from '../DB/Models/Otp/otp.schema';
 
@@ -27,7 +27,7 @@ export class AuthService {
     code: string,
     type: otpType,
   ): Promise<void> {
-    // احذف أي OTP قديم لنفس الإيميل والنوع
+    // Ø§Ø­Ø°Ù Ø£ÙŠ OTP Ù‚Ø¯ÙŠÙ… Ù„Ù†ÙØ³ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ ÙˆØ§Ù„Ù†ÙˆØ¹
     await this.otpRepository.deleteMany({ email, otp_type: type });
 
     const hashedCode = hash(code);
@@ -51,28 +51,28 @@ export class AuthService {
       expiresIn: { $gt: new Date() },
     });
 
-    if (!otpEntry || !(await compare(code, otpEntry.code))) {
+    if (!otpEntry || !compare(code, otpEntry.code)) {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
-    // حذف الـ OTP بعد الاستخدام
+    // Ø­Ø°Ù Ø§Ù„Ù€ OTP Ø¨Ø¹Ø¯ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…
     await this.otpRepository.deleteOne({ _id: otpEntry._id });
   }
 
   async signupService(signupDto: SignupDto): Promise<{ message: string }> {
     const { name, email } = signupDto;
 
-    // تحقق إذا الإيميل موجود مسبقًا
+    // ØªØ­Ù‚Ù‚ Ø¥Ø°Ø§ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ù…ÙˆØ¬ÙˆØ¯ Ù…Ø³Ø¨Ù‚Ù‹Ø§
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
 
-    // توليد وحفظ OTP
+    // ØªÙˆÙ„ÙŠØ¯ ÙˆØ­ÙØ¸ OTP
     const code = this.generateOtp();
     await this.saveOtp(email, code, otpType.CONFIRM_EMAIL);
 
-    // إرسال OTP للمدير
+    // Ø¥Ø±Ø³Ø§Ù„ OTP Ù„Ù„Ù…Ø¯ÙŠØ±
     await sendEmail({
       to: process.env.EMAIL,
       subject: 'New Account Registration Request',
@@ -97,16 +97,16 @@ export class AuthService {
   async verifyOtp(dto: VerifyOtpDto) {
     const { name, email, password, code } = dto;
 
-    // تحقق من صحة OTP
+    // ØªØ­Ù‚Ù‚ Ù…Ù† ØµØ­Ø© OTP
     await this.validateOtp(email, code, otpType.CONFIRM_EMAIL);
 
-    // تحقق إذا الإيميل موجود (حماية مزدوجة)
+    // ØªØ­Ù‚Ù‚ Ø¥Ø°Ø§ Ø§Ù„Ø¥ÙŠÙ…ÙŠÙ„ Ù…ÙˆØ¬ÙˆØ¯ (Ø­Ù…Ø§ÙŠØ© Ù…Ø²Ø¯ÙˆØ¬Ø©)
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
     }
 
-    // إنشاء المستخدم
+    // Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…
     const createdUser = await this.userRepository.create({
       name,
       email,
@@ -125,11 +125,11 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // توليد وحفظ OTP
+    // ØªÙˆÙ„ÙŠØ¯ ÙˆØ­ÙØ¸ OTP
     const code = this.generateOtp();
     await this.saveOtp(email, code, otpType.LOGIN_OTP);
 
-    // إرسال OTP للمستخدم
+    // Ø¥Ø±Ø³Ø§Ù„ OTP Ù„Ù„Ù…Ø³ØªØ®Ø¯Ù…
     await sendEmail({
       to: email,
       from: process.env.EMAIL,
@@ -145,16 +145,16 @@ export class AuthService {
 
   // Step 2: Verify OTP and login
   async verifyLoginOtp(email: string, code: string) {
-    // تحقق من صحة OTP
+    // ØªØ­Ù‚Ù‚ Ù…Ù† ØµØ­Ø© OTP
     await this.validateOtp(email, code, otpType.LOGIN_OTP);
 
-    // جلب بيانات المستخدم
+    // Ø¬Ù„Ø¨ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // توليد الـ Token
+    // ØªÙˆÙ„ÙŠØ¯ Ø§Ù„Ù€ Token
     const token = this.tokenService.sign(
       { _id: user._id },
       { secret: process.env.JWT_SECRET, expiresIn: '1d' },

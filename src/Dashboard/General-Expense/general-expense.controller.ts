@@ -13,7 +13,7 @@ import { Auth } from 'src/Common';
 import { CreateGeneralExpenseDto, UpdateGeneralExpenseDto } from './dto';
 
 
-@Auth('admin')
+@Auth('admin, accountant')
 @Controller('/admin/general-expenses')
 export class GeneralExpenseController {
     constructor(
