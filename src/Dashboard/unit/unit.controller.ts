@@ -29,6 +29,7 @@ export class UnitController {
     return I18nContext.current()?.lang || 'ar';
   }
 
+  @Auth('admin')
   @Post()
   async createUnit(@Body() createUnitDto: CreateUnitDto, @Req() req: Request) {
     const lang = this.getLang();
@@ -43,6 +44,7 @@ export class UnitController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get()
   async findAll(@Query('category') category?: UnitCategory) {
     const lang = this.getLang();
@@ -54,6 +56,7 @@ export class UnitController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get('base')
   async findBaseUnits() {
     const lang = this.getLang();
@@ -65,6 +68,7 @@ export class UnitController {
     };
   }
 
+   @Auth('admin', 'accountant', 'manager')
    @Get('dropdown')
   async findForDropdown(@Query('category') category?: string) {
     const lang = this.getLang();
@@ -76,6 +80,7 @@ export class UnitController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get('search')
   async search(@Query('q') searchTerm: string) {
     const lang = this.getLang();
@@ -89,6 +94,7 @@ export class UnitController {
 
 
 
+  @Auth('admin')
   @Post('convert')
   async convertUnits(@Body() convertDto: ConvertUnitDto) {
     const lang = this.getLang();
@@ -96,6 +102,7 @@ export class UnitController {
     return { result, message: this.i18n.translate(  'units.converted', { lang }) };
   }
 
+ @Auth('admin', 'accountant', 'manager')
  @Get(':id')
   async findById(@Param('id') id: string) {
     const lang = this.getLang();
@@ -107,6 +114,7 @@ export class UnitController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get(':id/derived')
  async findDerivedUnits(@Param('id') id: string) {
    const lang = this.getLang();
@@ -118,6 +126,7 @@ export class UnitController {
    };
  }
 
+   @Auth('admin')
    @Put(':id')
   async update(
     @Param('id') id: string,
@@ -138,11 +147,13 @@ export class UnitController {
   }
 
 
+   @Auth('admin')
    @Delete(':id')
   async delete(@Param('id') id: string, @Req() req: Request) {
     return await this.unitService.deleteUnit(id, req['user']._id);
   }
 
+   @Auth('admin')
    @Patch(':id/activate')
   async activate(@Param('id') id: string, @Req() req: Request) {
     return await this.unitService.activateUnit(id, req['user']._id);

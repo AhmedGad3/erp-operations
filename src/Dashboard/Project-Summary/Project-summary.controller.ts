@@ -8,6 +8,7 @@ import { ProjectSummaryQueryDto } from './dto/Project-summary-query.dto';
 export class ProjectSummaryController {
     constructor(private readonly projectSummaryService: ProjectSummaryService) {}
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getProjectSummary(@Query() query: ProjectSummaryQueryDto) {
         return this.projectSummaryService.getProjectSummary(query);

@@ -26,6 +26,7 @@ export class ClientPaymentController {
   // =========================
   // Create Payment
   // =========================
+  @Auth('admin')
   @Post()
   async createPayment(
     @Body() dto: CreateClientPaymentDto,
@@ -45,6 +46,7 @@ export class ClientPaymentController {
   // =========================
   // Get All Payments
   // =========================
+  @Auth('admin', 'accountant', 'manager')
   @Get()
   async findAll() {
     const lang = this.getLang();
@@ -58,6 +60,7 @@ export class ClientPaymentController {
   // =========================
   // Get Payment By ID
   // =========================
+  @Auth('admin', 'accountant', 'manager')
   @Get(':id')
   async findById(@Param('id') id: string) {
     const lang = this.getLang();
@@ -71,6 +74,7 @@ export class ClientPaymentController {
   // =========================
   // Get Payments By Project
   // =========================
+  @Auth('admin', 'accountant', 'manager')
   @Get('project/:projectId')
   async findByProject(@Param('projectId') projectId: string) {
     const lang = this.getLang();
@@ -84,6 +88,7 @@ export class ClientPaymentController {
   // =========================
   // Get Payments By Client
   // =========================
+  @Auth('admin', 'accountant', 'manager')
   @Get('client/:clientId')
   async findByClient(@Param('clientId') clientId: string) {
     const lang = this.getLang();

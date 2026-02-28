@@ -16,6 +16,7 @@ export class StockMovementController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+@Auth('admin')
 @Post('adjustment')
 async createAdjustment(
     @Body() dto: CreateAdjustmentDto,
@@ -32,6 +33,7 @@ async createAdjustment(
     };
 }
 
+@Auth('admin', 'accountant', 'manager')
 @Get('movements')
 async getMovements(@Req() req: Request) {
     const lang = this.getLang();

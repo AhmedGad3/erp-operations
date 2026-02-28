@@ -16,6 +16,7 @@ export class ClientLedgerController {
     return I18nContext.current()?.lang || 'ar';
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get()
   async getAllLedger() {
     const result = await this.ledgerService.findAll();
@@ -32,6 +33,7 @@ export class ClientLedgerController {
 
 
 
+  @Auth('admin', 'accountant', 'manager')
   @Get(':clientId')
   async getLedgerByClient(@Param('clientId') clientId: string) {
     const result = await this.ledgerService.findByClient(clientId);
@@ -43,6 +45,7 @@ export class ClientLedgerController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get(':clientId/project/:projectId/balance')
   async getClientProjectBalance(
     @Param('clientId') clientId: string,
@@ -62,6 +65,7 @@ export class ClientLedgerController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get(':clientId/total-balance')
   async getTotalClientBalance(@Param('clientId') clientId: string) {
     const totalBalance =
@@ -77,6 +81,7 @@ export class ClientLedgerController {
     };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get(':clientId/breakdown')
   async getClientBalanceBreakdown(@Param('clientId') clientId: string) {
     const result =

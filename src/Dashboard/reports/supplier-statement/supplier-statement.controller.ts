@@ -16,6 +16,7 @@ export class SupplierStatementController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':supplierId')
     async getSupplierStatement(
         @Param('supplierId') supplierId: string,
@@ -40,6 +41,7 @@ export class SupplierStatementController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getAllSuppliersStatement(
         @Query('startDate') startDate?: string,

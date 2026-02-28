@@ -16,6 +16,7 @@ export class SupplierLedgerController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getAllLedger() {
         const result = await this.ledgerService.findAll();
@@ -27,6 +28,7 @@ export class SupplierLedgerController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':supplierId')
     async getLedgerBySupplier(@Param('supplierId') supplierId: string) {
         const result = await this.ledgerService.findBySupplier(
@@ -43,6 +45,7 @@ export class SupplierLedgerController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':supplierId/balance')
     async getSupplierBalance(@Param('supplierId') supplierId: Types.ObjectId) {
         const amountDue = await this.ledgerService.getCurrentBalance(

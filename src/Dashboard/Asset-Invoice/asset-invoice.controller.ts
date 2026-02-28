@@ -18,6 +18,7 @@ export class AssetInvoiceController {
     constructor(private readonly assetInvoiceService: AssetInvoiceService) {}
 
     // ✅ Create Invoice
+    @Auth('admin')
     @Post()
     async create(
         @Body() dto: CreateAssetInvoiceDto,
@@ -31,6 +32,7 @@ export class AssetInvoiceController {
     }
 
     // ✅ Get All Invoices
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAll() {
         const result = await this.assetInvoiceService.findAll();
@@ -41,6 +43,7 @@ export class AssetInvoiceController {
     }
 
     // ✅ Get Invoices Paginated
+    @Auth('admin', 'accountant', 'manager')
     @Get('paginated')
     async findWithPagination(
         @Query('page') page: number = 1,
@@ -54,6 +57,7 @@ export class AssetInvoiceController {
     }
 
     // ✅ Get Total Amount
+    @Auth('admin', 'accountant', 'manager')
     @Get('total')
     async getTotalAmount(
         @Query('startDate') startDate?: string,
@@ -69,6 +73,7 @@ export class AssetInvoiceController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('by-asset/:assetId')
 async findByAssetId(@Param('assetId') assetId: string) {
     const result = await this.assetInvoiceService.findByAssetId(assetId);
@@ -79,6 +84,7 @@ async findByAssetId(@Param('assetId') assetId: string) {
 }
 
     // ✅ Get Invoice by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findOne(@Param('id') id: string) {
         const result = await this.assetInvoiceService.findOne(id);
@@ -89,6 +95,7 @@ async findByAssetId(@Param('assetId') assetId: string) {
     }
 
     // ✅ Delete Invoice (Soft Delete)
+    @Auth('admin')
     @Delete(':id')
     async remove(
         @Param('id') id: string,

@@ -16,6 +16,7 @@ export class ProjectController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createProject(@Body() createDto: CreateProjectDto, @Req() req:Request){
         const lang = this.getLang();
@@ -23,6 +24,7 @@ export class ProjectController {
         return { result, message: this.i18n.translate('projects.created', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAllProjects() {
         const lang = this.getLang();
@@ -33,6 +35,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('search')
     async searchProjects(@Query('q') searchTerm: string) {
         const lang = this.getLang();
@@ -43,6 +46,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('status/:status')
     async findByStatus(@Param('status') status: string) {
         const lang = this.getLang();
@@ -53,6 +57,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('client/:clientId/stats')
     async getClientStats(@Param('clientId') clientId: string) {
         const lang = this.getLang();
@@ -63,6 +68,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('client/:clientId')
     async findByClient(@Param('clientId') clientId: string) {
         const lang = this.getLang();
@@ -73,6 +79,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id/stats')
     async getProjectStats(@Param('id') id: string) {
         const lang = this.getLang();
@@ -83,6 +90,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') id: string) {
         const lang = this.getLang();
@@ -93,6 +101,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin')
     @Put(':id')
     async updateProject(
         @Param('id') id: string,
@@ -111,6 +120,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin')
     @Delete(':id')
     async deleteProject(@Param('id') id: string, @Req() req: Request) {
         const lang = this.getLang();
@@ -120,6 +130,7 @@ export class ProjectController {
         };
     }
 
+    @Auth('admin')
     @Patch(':id/activate')
     async activateProject(@Param('id') id: string, @Req() req: Request) {
         const lang = this.getLang();

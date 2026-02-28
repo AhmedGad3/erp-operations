@@ -16,6 +16,7 @@ export class SupplierController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createSupplier(@Body() dto: CreateSupplierDto, @Req() req: Request) {
         const lang = this.getLang();
@@ -23,6 +24,7 @@ export class SupplierController {
         return { result, message: this.i18n.translate('suppliers.created', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAllSuppliers() {
         const lang = this.getLang();
@@ -30,6 +32,7 @@ export class SupplierController {
         return { result, message: this.i18n.translate('suppliers.fetched', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('search')
     async searchSuppliers(@Query('q') searchTerm: string) {
         const lang = this.getLang();
@@ -37,6 +40,7 @@ export class SupplierController {
         return { result, message: this.i18n.translate('suppliers.fetched', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') supplierId: string) {
         const lang = this.getLang();
@@ -44,6 +48,7 @@ export class SupplierController {
         return { result, message: this.i18n.translate('suppliers.fetched', { lang }) };
     }
 
+    @Auth('admin')
     @Put(':id')
     async updateSupplier(@Param('id') supplierId: string, @Body() dto: UpdateSupplierDto, @Req() req: Request) {
         const lang = this.getLang();
@@ -51,6 +56,7 @@ export class SupplierController {
         return { result, message: this.i18n.translate('suppliers.updated', { lang }) };
     }
 
+    @Auth('admin')
     @Delete(':id')
     async deleteSupplier(@Param('id') supplierId: string, @Req() req: Request) {
         const lang = this.getLang();
@@ -58,6 +64,7 @@ export class SupplierController {
         return { message: this.i18n.translate('suppliers.deleted', { lang }) };
     }
 
+    @Auth('admin')
     @Patch(':id/activate')
     async activateSupplier(@Param('id') supplierId: string, @Req() req: Request) {
         const lang = this.getLang();

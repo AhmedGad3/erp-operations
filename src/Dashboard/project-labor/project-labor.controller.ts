@@ -28,6 +28,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Add Labor to Project
+    @Auth('admin')
     @Post()
     async addLabor(
         @Param('projectId') projectId: string,
@@ -47,6 +48,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Get All Labor for Project
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getProjectLabor(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -58,6 +60,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Get Labor by Date Range
+    @Auth('admin', 'accountant', 'manager')
     @Get('filter')
     async getLaborByDateRange(
         @Param('projectId') projectId: string,
@@ -77,6 +80,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Search by Worker Name
+    @Auth('admin', 'accountant', 'manager')
     @Get('search/worker')
     async searchByWorkerName(
         @Param('projectId') projectId: string,
@@ -94,6 +98,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Search by Specialty
+    @Auth('admin', 'accountant', 'manager')
     @Get('search/specialty')
     async searchBySpecialty(
         @Param('projectId') projectId: string,
@@ -111,6 +116,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Get Labor by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async getLaborById(@Param('id') id: string) {
         const lang = this.getLang();
@@ -122,6 +128,7 @@ export class ProjectLaborController {
     }
 
     // ✅ Update Labor
+    @Auth('admin')
     @Put(':id')
     async updateLabor(
         @Param('id') id: string,
@@ -141,6 +148,7 @@ export class ProjectLaborController {
     }
 
    // ✅ Delete Labor
+@Auth('admin')
 @Delete(':id')
 async deleteLabor(@Param('id') id: string, @Req() req: Request) {
     const lang = this.getLang();

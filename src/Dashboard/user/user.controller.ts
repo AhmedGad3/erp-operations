@@ -9,11 +9,13 @@ import { Request } from 'express';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Auth('admin', 'accountant', 'manager')
   @Get('me')
   async getMyProfile(@Req() req) {
     return this.userService.getProfile(req.user._id);
 
   }
+  @Auth('admin')
   @Post('create')
   async signup(@Body() createUserDto: CreateUserDto, @Req() req: Request) {
     const result = await this.userService.createService(createUserDto, req['user']);
@@ -27,6 +29,7 @@ export class UserController {
 
   }
 
+   @Auth('admin', 'accountant', 'manager')
    @Get('user/:id')
   async getUser(@Param('id') id: string) {
     return this.userService.getUserName(id);
@@ -34,10 +37,12 @@ export class UserController {
 
   
   // ============ Update User ============
+  @Auth('admin', 'accountant', 'manager')
   @Get('users')
   async getAllUsers() {
     return this.userService.getAllUsers();
   }
+@Auth('admin')
 @Patch('user/:id')
 async updateUser(
   @Param('id') id: string,
@@ -57,6 +62,7 @@ async updateUser(
 }
 
 // ============ Activate User ============
+@Auth('admin')
 @Patch('user/activate/:id')
 async activateUser(
   @Param('id') id: string,
@@ -73,6 +79,7 @@ async activateUser(
   };    
 }
 // ============ Soft Delete User ============
+@Auth('admin')
 @Delete('user/:id')
 async deleteUser(
   @Param('id') id: string,

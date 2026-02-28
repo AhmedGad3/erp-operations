@@ -27,6 +27,7 @@ export class ClientController {
     return I18nContext.current()?.lang || 'ar';
   }
 
+  @Auth('admin')
   @Post()
   async createClient(
     @Body() createClientDto: CreateClientDto,
@@ -40,6 +41,7 @@ export class ClientController {
     return { result, message: this.i18n.translate('clients.created', { lang }) };
   }
 
+  @Auth('admin', 'accountant', 'manager')
   @Get()
   async findAllClients() {
     const lang = this.getLang();
@@ -48,6 +50,7 @@ export class ClientController {
   }
 
   // ✅ Static routes أولاً
+  @Auth('admin', 'accountant', 'manager')
   @Get('search')
   async searchClients(@Query('q') searchTerm: string) {
     const lang = this.getLang();
@@ -56,6 +59,7 @@ export class ClientController {
   }
 
   // ✅ Dynamic routes آخراً
+  @Auth('admin', 'accountant', 'manager')
   @Get(':id')
   async findById(@Param('id') id: string) {
     const lang = this.getLang();
@@ -63,6 +67,7 @@ export class ClientController {
     return { result, message: this.i18n.translate('clients.fetched', { lang }) };
   }
 
+  @Auth('admin')
   @Put(':id')
   async updateClient(
     @Param('id') id: string,
@@ -78,6 +83,7 @@ export class ClientController {
     return { result, message: this.i18n.translate('clients.updated', { lang }) };
   }
 
+  @Auth('admin')
   @Patch(':id/activate')
   async activateClient(@Param('id') id: string, @Req() req: Request) {
     const lang = this.getLang();
@@ -88,6 +94,7 @@ export class ClientController {
     };
   }
 
+  @Auth('admin')
   @Delete(':id')
   async deleteClient(@Param('id') id: string, @Req() req: Request) {
     const lang = this.getLang();

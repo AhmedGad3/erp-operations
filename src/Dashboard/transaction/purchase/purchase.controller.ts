@@ -18,6 +18,7 @@ export class PurchaseController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createPurchase(@Body() dto: CreatePurchaseDto, @Req() req: Request) {
         const invoice = await this.purchaseService.createPurchase(dto, req['user']);
@@ -25,6 +26,7 @@ export class PurchaseController {
         return { result: invoice, message };
     }
 
+    @Auth('admin')
     @Post('return')
     async createReturn(
         @Body() dto: CreatePurchaseReturnDto,
@@ -37,12 +39,14 @@ export class PurchaseController {
     }
 
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getAllPurchases() {
         const purchases = await this.purchaseService.findAll();
         const message = this.i18n.translate('purchases.fetched', { lang: this.getLang() });
         return { result: purchases, message };
     }
+    @Auth('admin', 'accountant', 'manager')
     @Get('return')
     async getAllPurchasesReturns() {
         const returns = await this.purchaseService.findAllReturns();
@@ -50,6 +54,7 @@ export class PurchaseController {
         return { result: returns, message };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('supplier/:supplierId/open')
     async getOpenInvoices(@Param('supplierId') supplierId: string) {
         const invoices = await this.purchaseService.getOpenInvoices(supplierId);
@@ -57,6 +62,7 @@ export class PurchaseController {
         return { result: invoices, message };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('supplier/:supplierId')
     async getPurchasesBySupplier(@Param('supplierId') supplierId: string) {
         const purchases = await this.purchaseService.findBySupplier(supplierId);
@@ -64,6 +70,7 @@ export class PurchaseController {
         return { result: purchases, message };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async getPurchase(@Param('id') id: string) {
         const invoice = await this.purchaseService.findById(id);

@@ -28,6 +28,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Add Miscellaneous to Project
+    @Auth('admin')
     @Post()
     async addMiscellaneous(
         @Param('projectId') projectId: string,
@@ -47,6 +48,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Get All Miscellaneous for Project
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getProjectMiscellaneous(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -58,6 +60,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Get All Categories for Project
+    @Auth('admin', 'accountant', 'manager')
     @Get('categories')
     async getProjectCategories(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -69,6 +72,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Get Miscellaneous by Date Range
+    @Auth('admin', 'accountant', 'manager')
     @Get('filter')
     async getMiscellaneousByDateRange(
         @Param('projectId') projectId: string,
@@ -88,6 +92,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Search by Category
+    @Auth('admin', 'accountant', 'manager')
     @Get('search/category')
     async searchByCategory(
         @Param('projectId') projectId: string,
@@ -105,6 +110,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Get Miscellaneous by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async getMiscellaneousById(@Param('id') id: string) {
         const lang = this.getLang();
@@ -116,6 +122,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Update Miscellaneous
+    @Auth('admin')
     @Put(':id')
     async updateMiscellaneous(
         @Param('id') id: string,
@@ -135,6 +142,7 @@ export class ProjectMiscellaneousController {
     }
 
     // ✅ Delete Miscellaneous
+    @Auth('admin')
     @Delete(':id')
     async deleteMiscellaneous(@Param('id') id: string, @Req() req: Request) {
         const lang = this.getLang();

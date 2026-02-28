@@ -30,6 +30,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Add Work to Project
+    @Auth('admin')
     @Post()
     async addWork(
         @Param('projectId') projectId: string,
@@ -49,6 +50,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Get All Works for Project
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getProjectWorks(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -60,6 +62,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Search
+    @Auth('admin', 'accountant', 'manager')
     @Get('search')
     async searchWorks(
         @Param('projectId') projectId: string,
@@ -74,6 +77,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Get Work by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async getWorkById(@Param('id') id: string) {
         const lang = this.getLang();
@@ -85,6 +89,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Update Work
+    @Auth('admin')
     @Put(':id')
     async updateWork(
         @Param('id') id: string,
@@ -104,6 +109,7 @@ export class SubcontractorWorkController {
     }
 
     // ✅ Delete Work
+    @Auth('admin')
     @Delete(':id')
     async deleteWork(@Param('id') id: string, @Req() req: Request) {
         const lang = this.getLang();

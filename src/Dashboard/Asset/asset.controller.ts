@@ -48,6 +48,7 @@ export class AssetController {
     }
     
     // ✅ Get All Assets
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAllAssets() {
         const lang = this.getLang();
@@ -59,7 +60,7 @@ export class AssetController {
     }
     
     // ✅ Get Active Assets
-    @Auth('admin')
+    @Auth('admin', 'accountant', 'manager')
     @Get('active')
     async findActiveAssets() {
         const lang = this.getLang();
@@ -71,6 +72,7 @@ export class AssetController {
     }
     
     // ✅ Get Available Assets
+    @Auth('admin', 'accountant', 'manager')
     @Get('available')
     async findAvailableAssets() {
         const lang = this.getLang();
@@ -82,6 +84,7 @@ export class AssetController {
     }
     
     // ✅ Get Assets by Status
+    @Auth('admin', 'accountant', 'manager')
     @Get('status/:status')
     async findByStatus(@Param('status') status: AssetStatus) {
         const lang = this.getLang();
@@ -93,6 +96,7 @@ export class AssetController {
     }
     
     // ✅ Search Assets
+    @Auth('admin', 'accountant', 'manager')
     @Get('search')
     async searchAssets(@Query('q') searchTerm: string) {
         const lang = this.getLang();
@@ -104,6 +108,7 @@ export class AssetController {
     }
     
     // ✅ Get Asset by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') assetId: string) {
         const lang = this.getLang();

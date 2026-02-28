@@ -24,6 +24,7 @@ export class MaterialIssueController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createMaterialIssue(
         @Body() dto: CreateMaterialIssueDto,
@@ -40,6 +41,7 @@ export class MaterialIssueController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAll() {
         const lang = this.getLang();
@@ -50,6 +52,7 @@ export class MaterialIssueController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('project/:projectId')
     async findByProject(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -60,6 +63,7 @@ export class MaterialIssueController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('client/:clientId')
     async findByClient(@Param('clientId') clientId: string) {
         const lang = this.getLang();
@@ -70,6 +74,7 @@ export class MaterialIssueController {
         };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') id: string) {
         const lang = this.getLang();

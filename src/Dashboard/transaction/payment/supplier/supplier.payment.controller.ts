@@ -18,6 +18,7 @@ export class SupplierPaymentController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createPayment(@Body() dto: CreatePaymentDto, @Req() req: Request) {
         const payment = await this.supplierPaymentService.createPayment(dto, req['user']);
@@ -25,6 +26,7 @@ export class SupplierPaymentController {
         return { result: payment, message };
     }
 
+    @Auth('admin')
     @Post('refund')
     async createRefund(
         @Body() dto: CreateSupplierRefundDto,
@@ -37,6 +39,7 @@ export class SupplierPaymentController {
         return { refundedPayment, message };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getAllPayments() {
 
@@ -44,6 +47,7 @@ export class SupplierPaymentController {
         return { result: payments, message: this.i18n.translate('payments.fetched', { lang: this.getLang() }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('refunds')
     async getAllRefunds() {
         const refunds = await this.supplierPaymentService.getAllRefunds();
@@ -52,6 +56,7 @@ export class SupplierPaymentController {
     }
 
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('supplier/:supplierId')
     async getSupplierPayments(@Param('supplierId') supplierId: string) {
 
@@ -59,6 +64,7 @@ export class SupplierPaymentController {
         return { result: payments, message: this.i18n.translate('payments.fetched', { lang: this.getLang() }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') id: string) {
         const payment = await this.supplierPaymentService.findById(id);

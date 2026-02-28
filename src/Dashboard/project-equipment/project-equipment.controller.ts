@@ -28,6 +28,7 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Add Equipment to Project
+    @Auth('admin')
     @Post()
     async addEquipment(
         @Param('projectId') projectId: string,
@@ -47,6 +48,7 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Get All Equipment for Project
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async getProjectEquipment(@Param('projectId') projectId: string) {
         const lang = this.getLang();
@@ -58,6 +60,7 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Get Equipment by Date Range
+    @Auth('admin', 'accountant', 'manager')
     @Get('filter')
     async getEquipmentByDateRange(
         @Param('projectId') projectId: string,
@@ -77,6 +80,7 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Get Equipment by ID
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async getEquipmentById(@Param('id') id: string) {
         const lang = this.getLang();
@@ -88,6 +92,7 @@ export class ProjectEquipmentController {
     }
 
     // ✅ Update Equipment
+    @Auth('admin')
     @Put(':id')
     async updateEquipment(
         @Param('id') id: string,

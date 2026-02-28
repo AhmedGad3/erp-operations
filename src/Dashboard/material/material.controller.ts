@@ -20,6 +20,7 @@ export class MaterialController {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    @Auth('admin')
     @Post()
     async createMaterial(@Body() createMaterialDto: CreateMaterialDto, @Req() req: Request) {
         const lang = this.getLang();
@@ -28,6 +29,7 @@ export class MaterialController {
     }
 
 
+    @Auth('admin', 'accountant', 'manager')
     @Get()
     async findAllMaterials() {
         const lang = this.getLang();
@@ -36,6 +38,7 @@ export class MaterialController {
     }
 
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('/main-categories')
     async getMainCategories() {
         const lang = this.getLang();
@@ -43,6 +46,7 @@ export class MaterialController {
         return { result, message: this.i18n.translate('materials.fetched', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('/sub-categories')
     async getSubCategories(
         @Query('main-category') mainCategory: string,
@@ -53,6 +57,7 @@ export class MaterialController {
         return { result, message: this.i18n.translate('materials.fetched', { lang }) };
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get('search')
     async searchMaterials(@Query('q') searchTerm: string) {
         const lang = this.getLang();
@@ -61,6 +66,7 @@ export class MaterialController {
 
     }
 
+    @Auth('admin', 'accountant', 'manager')
     @Get(':id')
     async findById(@Param('id') materialId: string) {
         const lang = this.getLang()
@@ -71,6 +77,7 @@ export class MaterialController {
     }
 
 
+    @Auth('admin')
     @Put(':id')
     async updateMaterial(@Param('id') materialId: string, @Body() updateMaterialDto: UpdateMaterialDto, @Req() req: Request) {
         const lang = this.getLang();
@@ -78,6 +85,7 @@ export class MaterialController {
         return { result, message: this.i18n.translate('materials.updated', { lang }) };
     }
 
+    @Auth('admin')
     @Delete(':id')
     async deleteMaterial(@Param('id') materialId: string, @Req() req: Request) {
         const lang = this.getLang();
@@ -85,6 +93,7 @@ export class MaterialController {
         return { result, message: this.i18n.translate('materials.deleted', { lang }) };
     }
 
+    @Auth('admin')
     @Patch(':id/activate')
     async activateMaterial(@Param('id') materialId: string, @Req() req: Request) {
         const lang = this.getLang();
