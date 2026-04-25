@@ -20,6 +20,21 @@ function getAllowedOrigins() {
   ];
 }
 
+function getCorsHeaders(origin) {
+  const allowedOrigins = getAllowedOrigins();
+  const allowOrigin = allowedOrigins.includes(origin)
+    ? origin
+    : allowedOrigins[0];
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept-Language',
+    Vary: 'Origin',
+  };
+}
+
 async function bootstrap() {
   const expressApp = express();
   const nestApp = await NestFactory.create(
@@ -48,6 +63,18 @@ async function bootstrap() {
 }
 
 module.exports = async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    const corsHeaders = getCorsHeaders(req.headers.origin);
+
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
+
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+
   cachedServer = cachedServer || (await bootstrap());
   return cachedServer(req, res);
 };
