@@ -2,13 +2,12 @@ require('dotenv').config();
 require('module-alias/register');
 
 const express = require('express');
-const serverless = require('serverless-http');
 const { NestFactory } = require('@nestjs/core');
 const { ExpressAdapter } = require('@nestjs/platform-express');
 const { ValidationPipe } = require('@nestjs/common');
 const { AppModule } = require('../dist/app.module');
 
-let cachedServer;
+let cachedApp;
 
 function getAllowedOrigins() {
   return [
@@ -59,7 +58,7 @@ async function bootstrap() {
 
   await nestApp.init();
 
-  return serverless(expressApp);
+  return expressApp;
 }
 
 module.exports = async (req, res) => {
@@ -75,6 +74,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  cachedServer = cachedServer || (await bootstrap());
-  return cachedServer(req, res);
+  cachedApp = cachedApp || (await bootstrap());
+  return cachedApp(req, res);
 };
