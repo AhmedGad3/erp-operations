@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { compare, hash, sendEmail, TokenService } from '../Common';
@@ -12,6 +14,8 @@ import { otpType } from '../DB/Models/Otp/otp.schema';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly userRepository: UserRepository,
     private tokenService: TokenService,
@@ -124,23 +128,35 @@ export class AuthService {
    * Step 3: Login
    */
   async requestLoginOtp(email: string) {
+    this.logger.log(`Login OTP requested for ${email}`);
+
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
+      this.logger.warn(`Login OTP rejected, user not found: ${email}`);
       throw new NotFoundException('User not found');
     }
 
+    this.logger.log(`User found for login OTP: ${email}`);
+
     const code = this.generateOtp();
     await this.saveOtp(email, code, otpType.LOGIN_OTP);
+    this.logger.log(`OTP saved for ${email}`);
 
-    await sendEmail({
-      to: email,
-      from: process.env.EMAIL,
-      subject: 'Your Login OTP',
-      html: `
-        <p>Your OTP code is <strong>${code}</strong>.</p>
-        <p>Valid for 10 minutes.</p>
-      `,
-    });
+    try {
+      await sendEmail({
+        to: email,
+        from: process.env.EMAIL,
+        subject: 'Your Login OTP',
+        html: `
+          <p>Your OTP code is <strong>${code}</strong>.</p>
+          <p>Valid for 10 minutes.</p>
+        `,
+      });
+      this.logger.log(`OTP email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send OTP email to ${email}`, error instanceof Error ? error.stack : undefined);
+      throw new InternalServerErrorException('Failed to send OTP email');
+    }
 
     return { message: 'OTP sent to your email' };
   }
