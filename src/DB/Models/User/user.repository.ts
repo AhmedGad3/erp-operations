@@ -23,39 +23,44 @@ export class UserRepository extends DBService<TUser> {
   }
   
   findAll() {
-  return this.userModel.find().exec();
-}
+    return this.userModel.find().select('-password').exec();
+  }
 
-updateById(id: string, data: Partial<TUser>) {
-  return this.userModel.findByIdAndUpdate(
-    id,
-    data,
-    { new: true }
-  ).exec();
-}
+  updateById(id: string, data: Partial<TUser>) {
+    return this.userModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .select('-password')
+      .exec();
+  }
 
 
-softDelete(id: string,  user: TUser) {
-  return this.userModel.findByIdAndUpdate(
-    id,
-    { 
-      isActive: false,
-      updatedBy: user._id as Types.ObjectId
-    },
-    { new: true }
-  ).exec();
-}
+  softDelete(id: string, user: TUser) {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          isActive: false,
+          updatedBy: user._id as Types.ObjectId,
+        },
+        { new: true },
+      )
+      .select('-password')
+      .exec();
+  }
 
-activateUser(id: string,  user: TUser) {
-  return this.userModel.findByIdAndUpdate(
-    id,
-    { 
-      isActive: true,
-      updatedBy: user._id as Types.ObjectId
-    },
-    { new: true }
-  ).exec();
+  activateUser(id: string, user: TUser) {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          isActive: true,
+          updatedBy: user._id as Types.ObjectId,
+        },
+        { new: true },
+      )
+      .select('-password')
+      .exec();
 
-  
-}
+    
+  }
 }

@@ -43,7 +43,11 @@ import { Types } from 'mongoose';
         `,
       });
   
-      return createdUser;
+      const sanitizedUser = await this.userRepository.findById(
+        createdUser._id as Types.ObjectId,
+      );
+
+      return sanitizedUser as TUser;
     }
 
     async getProfile(id: string): Promise<TUser> {

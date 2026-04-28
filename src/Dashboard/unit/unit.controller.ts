@@ -44,6 +44,21 @@ export class UnitController {
     };
   }
 
+
+  @Auth('admin')
+  @Post('quick-create')
+  async quickCreateUnit(@Body() createUnitDto: CreateUnitDto, @Req() req: Request) {
+    const lang = this.getLang();
+    const result = await this.unitService.createUnit(
+      createUnitDto,
+      req['user'],
+    );
+
+    return {
+      result,
+      message: this.i18n.translate('units.created', { lang }),
+    };
+  }
   @Auth('admin', 'accountant', 'manager')
   @Get()
   async findAll(@Query('category') category?: UnitCategory) {
@@ -159,3 +174,4 @@ export class UnitController {
     return await this.unitService.activateUnit(id, req['user']._id);
   }
 }
+

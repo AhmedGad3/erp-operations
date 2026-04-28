@@ -19,11 +19,24 @@ function getAllowedOrigins() {
   ];
 }
 
-function getCorsHeaders(origin) {
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return false;
+  }
+
   const allowedOrigins = getAllowedOrigins();
-  const allowOrigin = allowedOrigins.includes(origin)
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  return /^https:\/\/erp-operation-react-[^.]+-blannkks-projects\.vercel\.app$/.test(origin);
+}
+
+function getCorsHeaders(origin) {
+  const fallbackOrigin = getAllowedOrigins()[0];
+  const allowOrigin = isAllowedOrigin(origin)
     ? origin
-    : allowedOrigins[0];
+    : fallbackOrigin;
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
@@ -42,7 +55,14 @@ async function bootstrap() {
   );
 
   nestApp.enableCors({
-    origin: getAllowedOrigins(),
+    origin: (origin, callback) => {
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
