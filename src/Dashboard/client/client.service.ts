@@ -66,7 +66,7 @@ async findById(id: string): Promise<TClient> {
 
     if (!Types.ObjectId.isValid(id)) {
         throw new BadRequestException(
-            this.i18n.translate('client.errors.invalidId', { lang }),
+            this.i18n.translate('clients.errors.invalidId', { lang }),
         );
     }
 
@@ -74,7 +74,7 @@ async findById(id: string): Promise<TClient> {
 
     if (!client) {
         throw new NotFoundException(
-            this.i18n.translate('client.errors.notFound', { lang }),
+            this.i18n.translate('clients.errors.notFound', { lang }),
         );
     }
 

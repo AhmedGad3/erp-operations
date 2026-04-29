@@ -1,7 +1,7 @@
 
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { HydratedDocument, Model, Types } from "mongoose";
+import { ClientSession, HydratedDocument, Model, Types } from "mongoose";
 import { StockMovement, StockMovementDocument, StockMovementType } from "../../../DB/Models/Transaction/stock-movement.schema";
 import { CounterService } from "../common/counter.service";
 import { MaterialRepository } from "../../../DB";
@@ -35,21 +35,24 @@ export class StockMovementService {
         }
     }
 
-   async create(data: {
-    materialId: Types.ObjectId;
-    unitId: Types.ObjectId;
-    type: StockMovementType;
-    quantity: number;
-    quantityInBase?: number;
-    referenceType: string;
-    referenceId: Types.ObjectId; 
-    lastPurchasePrice?: number;
-    lastPurchaseDate?: Date;
-    unitPrice?: number;
-    projectId?: Types.ObjectId;
-    notes?: string;
-    createdBy: Types.ObjectId;
-}) {
+   async create(
+    data: {
+      materialId: Types.ObjectId;
+      unitId: Types.ObjectId;
+      type: StockMovementType;
+      quantity: number;
+      quantityInBase?: number;
+      referenceType: string;
+      referenceId: Types.ObjectId;
+      lastPurchasePrice?: number;
+      lastPurchaseDate?: Date;
+      unitPrice?: number;
+      projectId?: Types.ObjectId;
+      notes?: string;
+      createdBy: Types.ObjectId;
+    },
+    session?: ClientSession,
+  ) {
     const material = await this.materialRepository.findById(data.materialId);
     if (!material) {
         throw new BadRequestException('Material not found');
@@ -71,6 +74,7 @@ export class StockMovementService {
 
     const lastMovement = await this.stockModel
         .findOne({ materialId: data.materialId })
+        .session(session || null)
         .sort({ movementDate: -1, _id: -1 });
 
     const lastBalance = lastMovement?.balanceAfter ?? material.currentStock ?? 0;
@@ -84,14 +88,14 @@ export class StockMovementService {
         throw new BadRequestException('Insufficient stock');
     }
 
-    const movementNo = await this.counterService.getNext('stock-movement');
+    const movementNo = await this.counterService.getNext('stock-movement', session);
 
-    const movement = await this.stockModel.create({
+    const [movement] = await this.stockModel.create([{
         ...data,
         movementNo,
         balanceAfter,
         movementDate: new Date(),
-    });
+    }], session ? { session } : undefined);
 
     const materialUpdate: Record<string, any> = {
         currentStock: balanceAfter,
@@ -108,7 +112,8 @@ export class StockMovementService {
 
     await this.materialRepository.updateOne(
         { _id: data.materialId },
-        { $set: materialUpdate }
+        { $set: materialUpdate },
+        session ? { session } : undefined,
     );
 
     return movement;
@@ -171,7 +176,7 @@ const adjustment = await this.create({
     referenceId: new Types.ObjectId(),
     notes: `Adjustment: ${item.reason}`,
     createdBy: data.createdBy,
-});
+}, undefined);
 
 results.push(adjustment);
     }

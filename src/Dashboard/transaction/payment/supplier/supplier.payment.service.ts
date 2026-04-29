@@ -109,14 +109,14 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
     // ✅ Check 1: الرصيد لازم يكون موجب (فيه مديونية)
     if (currentBalance <= 0) {
         throw new BadRequestException(
-            this.i18n.translate('payment.errors.noBalance', { lang }),
+            this.i18n.translate('payments.errors.noBalance', { lang }),
         );
     }
 
     // ✅ Check 2: الـ totalAmount لازم يكون <= الرصيد (no overpayment)
     if (totalAmount > currentBalance) {
         throw new BadRequestException(
-            this.i18n.translate('payment.errors.exceedsBalance', {
+            this.i18n.translate('payments.errors.exceedsBalance', {
                 lang,
                 args: { amount: totalAmount, balance: currentBalance },
             }),
@@ -126,7 +126,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
     // ✅ Check 3: الخصم لازم يكون أقل من الرصيد لوحده
     if (discountAmount >= currentBalance) {
         throw new BadRequestException(
-            this.i18n.translate('payment.errors.discountExceedsBalance', {
+            this.i18n.translate('payments.errors.discountExceedsBalance', {
                 lang,
                 args: { discount: discountAmount, balance: currentBalance },
             }),
@@ -222,7 +222,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
         // ✅ Check 1: الرصيد لازم يكون سالب (المورد مدينلك)
         if (currentBalance >= 0) {
             throw new BadRequestException(
-                this.i18n.translate('payment.errors.noRefundDue', {
+                this.i18n.translate('payments.errors.noRefundDue', {
                     lang,
                     args: { balance: currentBalance }
                 }),
@@ -234,7 +234,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
 
         if (dto.amount > maxRefund) {
             throw new BadRequestException(
-                this.i18n.translate('payment.errors.refundExceedsBalance', {
+                this.i18n.translate('payments.errors.refundExceedsBalance', {
                     lang,
                     args: {
                         amount: dto.amount,
@@ -289,7 +289,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
 
         if (!Types.ObjectId.isValid(id)) {
             throw new BadRequestException(
-                this.i18n.translate('payment.errors.invalidId', { lang })
+                this.i18n.translate('payments.errors.invalidId', { lang })
             );
         }
 
@@ -297,7 +297,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
 
         if (!payment) {
             throw new NotFoundException(
-                this.i18n.translate('payment.errors.notFound', { lang }),
+                this.i18n.translate('payments.errors.notFound', { lang }),
             );
         }
 
@@ -309,7 +309,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
 
         if (!Types.ObjectId.isValid(supplierId)) {
             throw new BadRequestException(
-                this.i18n.translate('payment.errors.invalidId', { lang })
+                this.i18n.translate('payments.errors.invalidId', { lang })
             );
         }
 
@@ -320,7 +320,7 @@ async createPayment(dto: CreatePaymentDto, user: TUser) {
 
         if (!payments.length) {
             throw new NotFoundException(
-                this.i18n.translate('payment.errors.noPaymentsFound', { lang }),
+                this.i18n.translate('payments.errors.noPaymentsFound', { lang }),
             );
         }
 

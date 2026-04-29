@@ -4,9 +4,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { TokenService } from '../Services';
-import { UserRepository } from '../../DB';
 import { Reflector } from '@nestjs/core';
+import { UserRepository } from '../../DB';
+import { TokenService } from '../Services';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,7 +19,6 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    // السماح بالـ public routes
     const isPublic = this.reflector.getAllAndOverride<boolean>('public', [
       context.getHandler(),
       context.getClass(),
@@ -34,12 +33,10 @@ export class AuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     try {
-      // verify token
       const payload = this.tokenService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
 
-      // find user
       const user = await this.userRepository.findOne({ _id: payload._id });
       if (!user) {
         throw new UnauthorizedException('User no longer exists');
@@ -47,9 +44,8 @@ export class AuthGuard implements CanActivate {
 
       request.user = user;
       return true;
-    } catch (err) {
-      // أي خطأ JWT (expired / malformed / invalid)
-      throw new UnauthorizedException('Invalid or expired token' + err.message);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

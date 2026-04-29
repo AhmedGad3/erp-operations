@@ -3,7 +3,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import {
   ClientTransaction,
   ClientTransactionDocument,
@@ -36,26 +36,27 @@ export class ClientLedgerService {
     referenceType: string;
     referenceId: Types.ObjectId;
     createdBy: Types.ObjectId;
-  }) {
+  }, session?: ClientSession) {
     const last = await this.ledgerModel
       .findOne({ 
         clientId:  new Types.ObjectId(data.clientId),
         projectId: new Types.ObjectId(data.projectId),
       })
+      .session(session || null)
       .sort({ transactionDate: -1, _id: -1 });
 
     const lastBalance = last?.balanceAfter ?? 0;
 
-    const transactionNo = await this.counterService.getNext('client-transaction');
+    const transactionNo = await this.counterService.getNext('client-transaction', session);
 
     const balanceAfter = lastBalance + data.debit - data.credit;
 
-    const transaction = await this.ledgerModel.create({
+    const [transaction] = await this.ledgerModel.create([{
       ...data,
       transactionNo,
       balanceAfter,
       transactionDate: new Date(),
-    });
+    }], session ? { session } : undefined);
 
     
     return transaction;
@@ -69,12 +70,14 @@ export class ClientLedgerService {
   async getCurrentBalance(
     clientId: Types.ObjectId,
     projectId: Types.ObjectId,
+    session?: ClientSession,
   ): Promise<number> {
     const last = await this.ledgerModel
       .findOne({ 
         clientId: new Types.ObjectId(clientId), 
             projectId: new Types.ObjectId(projectId),
       })
+      .session(session || null)
       .sort({ transactionDate: -1, _id: -1 })
       .select('balanceAfter');
 

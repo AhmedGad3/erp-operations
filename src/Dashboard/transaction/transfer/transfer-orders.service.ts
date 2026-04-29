@@ -255,7 +255,7 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
 
         if (!Types.ObjectId.isValid(projectId)) {
             throw new BadRequestException(
-                this.i18n.translate('project.errors.invalidId', { lang }),
+                this.i18n.translate('projects.errors.invalidId', { lang }),
             );
         }
 
@@ -273,7 +273,7 @@ async createMaterialIssue(dto: CreateMaterialIssueDto, user: TUser) {
 
         if (!Types.ObjectId.isValid(clientId)) {
             throw new BadRequestException(
-                this.i18n.translate('client.errors.invalidId', { lang }),
+                this.i18n.translate('clients.errors.invalidId', { lang }),
             );
         }
 

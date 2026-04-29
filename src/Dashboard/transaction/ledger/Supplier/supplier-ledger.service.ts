@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
+import { ClientSession, Model, Types } from "mongoose";
 import {
     SupplierTransaction,
     SupplierTransactionDocument,
@@ -28,7 +28,7 @@ export class SupplierLedgerService {
         referenceType: string;
         referenceId: Types.ObjectId;
         createdBy: Types.ObjectId;
-    }) {
+    }, session?: ClientSession) {
         const discountAmount = data.discountAmount ?? 0;
 
             const totalCredit = data.credit + discountAmount
@@ -47,31 +47,36 @@ export class SupplierLedgerService {
         // Get last balance
         const last = await this.ledgerModel
             .findOne({ supplierId: data.supplierId })
+            .session(session || null)
             .sort({ transactionDate: -1, _id: -1 });
 
         const lastBalance = last?.balanceAfter ?? 0;
 
         // Generate number
-        const transactionNo = await this.counterService.getNext('supplier-transaction');
+        const transactionNo = await this.counterService.getNext('supplier-transaction', session);
 
         const balanceAfter = lastBalance + data.debit - totalCredit;
         
 
         // Create transaction
-        const transaction = await this.ledgerModel.create({
+        const [transaction] = await this.ledgerModel.create([{
             ...data,
             transactionNo,
-            credit: data.credit,     
-        discountAmount, 
+            credit: data.credit,
+            discountAmount,
             balanceAfter,
             transactionDate: new Date(),
-        });
+        }], session ? { session } : undefined);
 
         return transaction;
     }
-    async getCurrentBalance(supplierId: Types.ObjectId): Promise<number> {
+    async getCurrentBalance(
+        supplierId: Types.ObjectId,
+        session?: ClientSession,
+    ): Promise<number> {
         const last = await this.ledgerModel
             .findOne({ supplierId })
+            .session(session || null)
             .sort({ transactionDate: -1, _id: -1 })
             .select('balanceAfter');
 

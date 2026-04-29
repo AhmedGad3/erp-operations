@@ -6,10 +6,17 @@
   "errors": {
     "noBalance": "No outstanding balance for this supplier",
     "exceedsBalance": "Amount {{amount}} exceeds outstanding balance {{balance}}",
+    "discountExceedsBalance": "Discount {{discount}} cannot be greater than or equal to outstanding balance {{balance}}",
     "noRefundDue": "No refund due for this supplier. Current balance: {{balance}}",
     "refundExceedsBalance": "Refund amount {{amount}} exceeds maximum due {{maxRefund}}",
     "notFound": "Payment not found",
     "invalidId": "Invalid payment ID",
-    "noPaymentsFound": "No payments found for this supplier"
+    "noPaymentsFound": "No payments found for this supplier",
+    "invalidTotal": "Total payment amount is invalid",
+    "invalidAmount": "Payment amount must be greater than zero",
+    "exceedsContract": "Contract payment exceeds remaining contract amount {{remaining}}",
+    "contractMustBePaidFirst": "Contract amount must be paid first before additional payments",
+    "noAdditionalBalance": "There is no additional balance due for this project",
+    "exceedsLedger": "Additional payment exceeds outstanding balance {{balance}}"
   }
 }

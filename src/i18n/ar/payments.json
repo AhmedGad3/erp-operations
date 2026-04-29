@@ -2,14 +2,20 @@
   "created": "تم تسجيل الدفعة بنجاح",
   "fetched": "تم جلب الدفعات بنجاح",
   "openFetched": "تم جلب الفواتير المفتوحة بنجاح",
-  
   "errors": {
-  "noBalance": "لا يوجد رصيد مستحق للمورد",
+    "noBalance": "لا يوجد رصيد مستحق للمورد",
     "exceedsBalance": "المبلغ {{amount}} يتجاوز الرصيد المستحق {{balance}}",
+    "discountExceedsBalance": "قيمة الخصم {{discount}} لا يجوز أن تكون أكبر من أو تساوي الرصيد المستحق {{balance}}",
     "noRefundDue": "لا يوجد رصيد مستحق للاسترداد من هذا المورد. الرصيد الحالي: {{balance}}",
     "refundExceedsBalance": "مبلغ الاسترداد {{amount}} يتجاوز الحد الأقصى المستحق {{maxRefund}}",
     "notFound": "الدفعة غير موجودة",
     "invalidId": "معرف الدفعة غير صالح",
-    "noPaymentsFound": "لا توجد دفعات للمورد"
+    "noPaymentsFound": "لا توجد دفعات للمورد",
+    "invalidTotal": "إجمالي الدفعة غير صحيح",
+    "invalidAmount": "مبلغ الدفعة يجب أن يكون أكبر من صفر",
+    "exceedsContract": "دفعة العقد تتجاوز المتبقي من العقد {{remaining}}",
+    "contractMustBePaidFirst": "يجب سداد المبلغ التعاقدي أولاً قبل أي دفعات إضافية",
+    "noAdditionalBalance": "لا يوجد رصيد إضافي مستحق على هذا المشروع",
+    "exceedsLedger": "الدفعة الإضافية تتجاوز الرصيد المستحق {{balance}}"
   }
 }

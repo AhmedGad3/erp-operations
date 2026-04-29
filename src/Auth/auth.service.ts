@@ -129,11 +129,14 @@ export class AuthService {
    */
   async requestLoginOtp(email: string) {
     this.logger.log(`Login OTP requested for ${email}`);
+    const safeResponse = {
+      message: 'If an account exists for this email, a login code has been sent.',
+    };
 
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      this.logger.warn(`Login OTP rejected, user not found: ${email}`);
-      throw new NotFoundException('User not found');
+      this.logger.warn(`Login OTP requested for unknown email: ${email}`);
+      return safeResponse;
     }
 
     this.logger.log(`User found for login OTP: ${email}`);
@@ -158,7 +161,7 @@ export class AuthService {
       throw new InternalServerErrorException('Failed to send OTP email');
     }
 
-    return { message: 'OTP sent to your email' };
+    return safeResponse;
   }
 
   // Step 2: Verify OTP and login

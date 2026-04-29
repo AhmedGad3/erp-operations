@@ -1,328 +1,373 @@
 import {
-    Injectable,
-    BadRequestException,
-    NotFoundException,
+  BadRequestException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { PurchaseInvoice, PurchaseInvoiceStatus } from '../../../DB/Models/Transaction/supplier/purchase-invoice.schema';
-import { SupplierLedgerService } from '../ledger/Supplier/supplier-ledger.service';
-import { CounterService } from '../common/counter.service';
-import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
-import { TUser, MaterialRepository } from '../../../DB';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Connection, Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { CreatePurchaseReturnDto } from './dto/create-purchase-return.dto';
-import { PurchaseReturn, PurchaseReturnDocument } from '../../../DB/Models/Transaction/supplier/purchase-return.schema';
+import { TUser, MaterialRepository } from '../../../DB';
+import {
+  PurchaseInvoice,
+  PurchaseInvoiceStatus,
+} from '../../../DB/Models/Transaction/supplier/purchase-invoice.schema';
+import {
+  PurchaseReturn,
+  PurchaseReturnDocument,
+} from '../../../DB/Models/Transaction/supplier/purchase-return.schema';
+import { StockMovementType } from '../../../DB/Models/Transaction/stock-movement.schema';
+import { CounterService } from '../common/counter.service';
+import { SupplierLedgerService } from '../ledger/Supplier/supplier-ledger.service';
 import { StockMovementService } from '../stock/stock-movement.service';
+import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { CreatePurchaseReturnDto } from './dto/create-purchase-return.dto';
 
 @Injectable()
 export class PurchaseService {
-    constructor(
-        @InjectModel(PurchaseInvoice.name)
-        private readonly purchaseModel: Model<PurchaseInvoice>,
+  constructor(
+    @InjectModel(PurchaseInvoice.name)
+    private readonly purchaseModel: Model<PurchaseInvoice>,
 
-        @InjectModel(PurchaseReturn.name)
-        private readonly purchaseReturnModel: Model<PurchaseReturnDocument>,
+    @InjectModel(PurchaseReturn.name)
+    private readonly purchaseReturnModel: Model<PurchaseReturnDocument>,
 
-        private readonly ledgerService: SupplierLedgerService,
-        private readonly stockMovementService: StockMovementService,
-        private readonly materialRepository: MaterialRepository,
-        private readonly counterService: CounterService,
-        private readonly i18n: I18nService,
-    ) { }
+    @InjectConnection()
+    private readonly connection: Connection,
 
-    private getLang(): string {
-        return I18nContext.current()?.lang || 'ar';
+    private readonly ledgerService: SupplierLedgerService,
+    private readonly stockMovementService: StockMovementService,
+    private readonly materialRepository: MaterialRepository,
+    private readonly counterService: CounterService,
+    private readonly i18n: I18nService,
+  ) {}
+
+  private getLang(): string {
+    return I18nContext.current()?.lang || 'ar';
+  }
+
+  private async allocateReturnToInvoices(
+    supplierId: Types.ObjectId,
+    amount: number,
+    session?: ClientSession,
+  ) {
+    let remaining = amount;
+
+    const openInvoices = await this.purchaseModel
+      .find({
+        supplierId,
+        status: {
+          $in: [PurchaseInvoiceStatus.OPEN, PurchaseInvoiceStatus.PARTIAL],
+        },
+      })
+      .session(session || null)
+      .sort({ invoiceDate: 1 });
+
+    for (const invoice of openInvoices) {
+      if (remaining <= 0) break;
+
+      const allocated = Math.min(invoice.remainingAmount, remaining);
+
+      invoice.paidAmount += allocated;
+      invoice.remainingAmount -= allocated;
+      invoice.status =
+        invoice.remainingAmount === 0
+          ? PurchaseInvoiceStatus.PAID
+          : PurchaseInvoiceStatus.PARTIAL;
+
+      await invoice.save(session ? { session } : undefined);
+      remaining -= allocated;
     }
-    // ===============================
-    // Allocate Return to Invoices
-    // ===============================
-    private async allocateReturnToInvoices(
-        supplierId: Types.ObjectId,
-        amount: number,
-    ) {
-        let remaining = amount;
+  }
 
-        const openInvoices = await this.purchaseModel
-            .find({
-                supplierId,
-                status: {
-                    $in: [
-                        PurchaseInvoiceStatus.OPEN,
-                        PurchaseInvoiceStatus.PARTIAL,
-                    ],
-                },
-            })
-            .sort({ invoiceDate: 1 }); // FIFO
-
-        for (const invoice of openInvoices) {
-            if (remaining <= 0) break;
-
-            const allocated = Math.min(invoice.remainingAmount, remaining);
-
-            invoice.paidAmount += allocated;
-            invoice.remainingAmount -= allocated;
-
-            invoice.status =
-                invoice.remainingAmount === 0
-                    ? PurchaseInvoiceStatus.PAID
-                    : PurchaseInvoiceStatus.PARTIAL;
-
-            await invoice.save();
-            remaining -= allocated;
-        }
-    }
-
-
-async createPurchase(dto: CreatePurchaseDto, user: TUser) {
+  async createPurchase(dto: CreatePurchaseDto, user: TUser) {
     const lang = this.getLang();
 
     const totalAmount = dto.items.reduce(
-        (sum, item) => sum + item.quantity * item.unitPrice,
-        0,
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0,
     );
 
     if (totalAmount <= 0) {
-        throw new BadRequestException(
-            this.i18n.translate('purchase.errors.invalidTotal', { lang }),
-        );
+      throw new BadRequestException(
+        this.i18n.translate('purchases.errors.invalidTotal', { lang }),
+      );
     }
 
-    // ✅ Validate units + حساب quantityInBase لكل item
-    const processedItems = await Promise.all(dto.items.map(async (item) => {
-        const material = await this.materialRepository.findActiveById(item.materialId.toString());
+    const processedItems = await Promise.all(
+      dto.items.map(async (item) => {
+        const material = await this.materialRepository.findActiveById(
+          item.materialId.toString(),
+        );
         if (!material) {
-            throw new NotFoundException(
-                this.i18n.translate('materials.errors.notFound', { lang })
-            );
+          throw new NotFoundException(
+            this.i18n.translate('materials.errors.notFound', { lang }),
+          );
         }
 
         const baseUnitId = material.baseUnit.toString();
         const unitId = item.unitId.toString();
-
         let conversionFactor = 1;
 
         if (unitId !== baseUnitId) {
-            const altUnit = material.alternativeUnits?.find(
-                u => u.unitId.toString() === unitId
+          const altUnit = material.alternativeUnits?.find(
+            (unit) => unit.unitId.toString() === unitId,
+          );
+          if (!altUnit) {
+            throw new BadRequestException(
+              this.i18n.translate('purchases.errors.invalidUnit', { lang }),
             );
-            if (!altUnit) {
-                throw new BadRequestException(
-                    this.i18n.translate('purchase.errors.invalidUnit', { lang })
-                );
-            }
-            // لو المستخدم بعت conversionFactor استخدمه، لو لأ جيب الافتراضي
-            conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
+          }
+          conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
         }
 
         const quantityInBase = item.quantity * conversionFactor;
+        return { item, conversionFactor, quantityInBase };
+      }),
+    );
 
-        return { item, material, conversionFactor, quantityInBase };
-    }));
+    const session = await this.connection.startSession();
 
-    const invoiceNo = await this.counterService.getNext('purchase-invoice');
+    try {
+      let createdInvoice: PurchaseInvoice | null = null;
 
-    const invoiceDate = new Date(dto.invoiceDate);
-    let dueDate: Date | undefined;
+      await session.withTransaction(async () => {
+        const invoiceNo = await this.counterService.getNext(
+          'purchase-invoice',
+          session,
+        );
 
-    if (dto.creditDays && dto.creditDays > 0) {
-        dueDate = new Date(invoiceDate);
-        dueDate.setDate(dueDate.getDate() + dto.creditDays);
-    }
+        const invoiceDate = new Date(dto.invoiceDate);
+        let dueDate: Date | undefined;
 
-    const invoice = await this.purchaseModel.create({
-        invoiceNo,
-        supplierId: dto.supplierId,
-        supplierInvoiceNo: dto.supplierInvoiceNo,
-        invoiceDate,
-        dueDate,
-        items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
+        if (dto.creditDays && dto.creditDays > 0) {
+          dueDate = new Date(invoiceDate);
+          dueDate.setDate(dueDate.getDate() + dto.creditDays);
+        }
+
+        const invoice = new this.purchaseModel({
+          invoiceNo,
+          supplierId: dto.supplierId,
+          supplierInvoiceNo: dto.supplierInvoiceNo,
+          invoiceDate,
+          dueDate,
+          items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
             materialId: item.materialId,
             unitId: item.unitId,
-            quantity: item.quantity,           // الكمية اللي المستخدم دخلها
-            quantityInBase,                    // الكمية بالـ baseUnit
-            conversionFactor,                  // المعامل المستخدم فعلاً
+            quantity: item.quantity,
+            quantityInBase,
+            conversionFactor,
             unitPrice: item.unitPrice,
             lastPurchasePrice: item.unitPrice,
             lastPurchaseDate: new Date(),
             total: item.quantity * item.unitPrice,
-        })),
-        totalAmount,
-        paidAmount: 0,
-        remainingAmount: totalAmount,
-        status: PurchaseInvoiceStatus.OPEN,
-        notes: dto.notes,
-        createdBy: user._id,
-    });
+          })),
+          totalAmount,
+          paidAmount: 0,
+          remainingAmount: totalAmount,
+          status: PurchaseInvoiceStatus.OPEN,
+          notes: dto.notes,
+          createdBy: user._id,
+        });
 
-    // ✅ Stock IN — بالـ quantityInBase
-    for (const { item, quantityInBase } of processedItems) {
-        await this.stockMovementService.create({
-            materialId: new Types.ObjectId(item.materialId),
-            unitId: new Types.ObjectId(item.unitId),
-            type: StockMovementType.IN,
-            quantity: quantityInBase,          // ← المهم هنا
-            unitPrice: item.unitPrice,
-            lastPurchasePrice: item.unitPrice,
-            lastPurchaseDate: new Date(),
+        await invoice.save({ session });
+
+        for (const { item, quantityInBase } of processedItems) {
+          await this.stockMovementService.create(
+            {
+              materialId: new Types.ObjectId(item.materialId),
+              unitId: new Types.ObjectId(item.unitId),
+              type: StockMovementType.IN,
+              quantity: quantityInBase,
+              unitPrice: item.unitPrice,
+              lastPurchasePrice: item.unitPrice,
+              lastPurchaseDate: new Date(),
+              referenceType: 'PurchaseInvoice',
+              referenceId: invoice._id,
+              createdBy: user._id as Types.ObjectId,
+            },
+            session,
+          );
+        }
+
+        await this.ledgerService.createTransaction(
+          {
+            supplierId: dto.supplierId,
+            debit: totalAmount,
+            credit: 0,
+            type: 'purchase',
             referenceType: 'PurchaseInvoice',
             referenceId: invoice._id,
             createdBy: user._id as Types.ObjectId,
-        });
+          },
+          session,
+        );
+
+        createdInvoice = invoice;
+      });
+
+      if (!createdInvoice) {
+        throw new BadRequestException('Failed to create purchase invoice');
+      }
+
+      return createdInvoice;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async findById(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      const lang = this.getLang();
+      throw new BadRequestException(
+        this.i18n.translate('purchases.errors.invalidId', { lang }),
+      );
     }
 
-    // ✅ Ledger (DEBIT)
-    await this.ledgerService.createTransaction({
-        supplierId: dto.supplierId,
-        debit: totalAmount,
-        credit: 0,
-        type: 'purchase',
-        referenceType: 'PurchaseInvoice',
-        referenceId: invoice._id,
-        createdBy: user._id as Types.ObjectId,
-    });
+    const invoice = await this.purchaseModel
+      .findById(id)
+      .populate('supplierId', 'nameAr nameEn code -_id')
+      .populate('items.materialId', 'nameAr nameEn code ')
+      .populate('createdBy', 'name email');
+
+    if (!invoice) {
+      const lang = this.getLang();
+      throw new NotFoundException(
+        this.i18n.translate('purchases.errors.notFound', { lang }),
+      );
+    }
 
     return invoice;
-}
-    async findById(id: string) {
-        if (!Types.ObjectId.isValid(id)) {
-            const lang = this.getLang();
-            throw new BadRequestException(
-                this.i18n.translate('purchase.errors.invalidId', { lang })
-            );
-        }
+  }
 
-        const invoice = await this.purchaseModel
-            .findById(id)
-            .populate('supplierId', 'nameAr nameEn code -_id')
-            .populate('items.materialId', 'nameAr nameEn code ')
-            .populate('createdBy', 'name email');
+  async findAll() {
+    return this.purchaseModel
+      .find()
+      .sort({ invoiceDate: -1 })
+      .populate('supplierId', 'nameAr nameEn code')
+      .populate('createdBy', 'name');
+  }
 
-        if (!invoice) {
-            const lang = this.getLang();
-            throw new NotFoundException(
-                this.i18n.translate('purchase.errors.notFound', { lang })
-            );
-        }
-
-        return invoice;
+  async findBySupplier(supplierId: string) {
+    if (!Types.ObjectId.isValid(supplierId)) {
+      const lang = this.getLang();
+      throw new BadRequestException(
+        this.i18n.translate('purchases.errors.invalidId', { lang }),
+      );
     }
 
-    async findAll() {
-        return this.purchaseModel
-            .find()
-            .sort({ invoiceDate: -1 })
-            .populate('supplierId', 'nameAr nameEn code')
-            .populate('createdBy', 'name');
+    const result = await this.purchaseModel
+      .find({ supplierId })
+      .sort({ invoiceDate: -1 })
+      .populate('createdBy', 'name');
+
+    if (result.length === 0) {
+      const lang = this.getLang();
+      throw new NotFoundException(
+        this.i18n.translate('purchases.errors.noPurchasesFound', { lang }),
+      );
     }
 
-    async findBySupplier(supplierId: string) {
-        if (!Types.ObjectId.isValid(supplierId)) {
-            const lang = this.getLang();
-            throw new BadRequestException(
-                this.i18n.translate('purchase.errors.invalidId', { lang })
-            );
-        }
-        const result = await this.purchaseModel
-            .find({ supplierId: (supplierId) })
-            .sort({ invoiceDate: -1 })
-            .populate('createdBy', 'name');
+    return result;
+  }
 
-        if (result.length === 0) {
-            const lang = this.getLang();
-            throw new NotFoundException(
-                this.i18n.translate('purchase.errors.noPurchasesFound', { lang })
-            );
-        }
-
-        return result;
+  async getOpenInvoices(supplierId: string) {
+    if (!Types.ObjectId.isValid(supplierId)) {
+      const lang = this.getLang();
+      throw new BadRequestException(
+        this.i18n.translate('purchases.errors.invalidId', { lang }),
+      );
     }
 
-    async getOpenInvoices(supplierId: string) {
-        if (!Types.ObjectId.isValid(supplierId)) {
-            const lang = this.getLang();
-            throw new BadRequestException(
-                this.i18n.translate('purchase.errors.invalidId', { lang })
-            );
-        }
-        const result = await this.purchaseModel
-            .find({
-                supplierId: (supplierId),
-                status: { $in: [PurchaseInvoiceStatus.OPEN, PurchaseInvoiceStatus.PARTIAL] },
-            })
-            .sort({ invoiceDate: 1 });
+    const result = await this.purchaseModel
+      .find({
+        supplierId,
+        status: {
+          $in: [PurchaseInvoiceStatus.OPEN, PurchaseInvoiceStatus.PARTIAL],
+        },
+      })
+      .sort({ invoiceDate: 1 });
 
-        if (result.length === 0) {
-            const lang = this.getLang();
-            throw new NotFoundException(
-                this.i18n.translate('purchase.errors.noOpenInvoices', { lang })
-            );
-        }
-
-        return result;
+    if (result.length === 0) {
+      const lang = this.getLang();
+      throw new NotFoundException(
+        this.i18n.translate('purchases.errors.noOpenInvoices', { lang }),
+      );
     }
 
- 
-async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
+    return result;
+  }
+
+  async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
     const lang = this.getLang();
 
-    // ✅ Validate + حساب quantityInBase لكل item
-    const processedItems = await Promise.all(dto.items.map(async (item) => {
-        const material = await this.materialRepository.findActiveById(item.materialId.toString());
+    const processedItems = await Promise.all(
+      dto.items.map(async (item) => {
+        const material = await this.materialRepository.findActiveById(
+          item.materialId.toString(),
+        );
 
         if (!material) {
-            throw new NotFoundException(
-                this.i18n.translate('materials.errors.notFound', { lang }),
-            );
+          throw new NotFoundException(
+            this.i18n.translate('materials.errors.notFound', { lang }),
+          );
         }
 
         const baseUnitId = material.baseUnit.toString();
         const unitId = item.unitId.toString();
-
         let conversionFactor = 1;
 
         if (unitId !== baseUnitId) {
-            const altUnit = material.alternativeUnits?.find(
-                u => u.unitId.toString() === unitId
+          const altUnit = material.alternativeUnits?.find(
+            (unit) => unit.unitId.toString() === unitId,
+          );
+          if (!altUnit) {
+            throw new BadRequestException(
+              this.i18n.translate('purchases.errors.invalidUnit', { lang }),
             );
-            if (!altUnit) {
-                throw new BadRequestException(
-                    this.i18n.translate('purchase.errors.invalidUnit', { lang })
-                );
-            }
-            conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
+          }
+          conversionFactor = item.conversionFactor ?? altUnit.conversionFactor;
         }
 
         const quantityInBase = item.quantity * conversionFactor;
 
         if (material.currentStock < quantityInBase) {
-            throw new BadRequestException(
-                this.i18n.translate('purchase.errors.insufficientStock', {
-                    lang,
-                    args: {
-                        material: material.nameAr,
-                        available: material.currentStock,
-                        requested: quantityInBase,
-                    },
-                }),
-            );
+          throw new BadRequestException(
+            this.i18n.translate('purchases.errors.insufficientStock', {
+              lang,
+              args: {
+                material: material.nameAr,
+                available: material.currentStock,
+                requested: quantityInBase,
+              },
+            }),
+          );
         }
 
         return { item, conversionFactor, quantityInBase };
-    }));
-
-    const totalAmount = processedItems.reduce(
-        (sum, { item }) => sum + item.quantity * item.unitPrice, 0
+      }),
     );
 
-    const returnNo = await this.counterService.getNext('purchase-return');
+    const totalAmount = processedItems.reduce(
+      (sum, { item }) => sum + item.quantity * item.unitPrice,
+      0,
+    );
 
-    const purchaseReturn = await this.purchaseReturnModel.create({
-        returnNo,
-        supplierId: dto.supplierId,
-        returnDate: dto.returnDate,
-        items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
+    const session = await this.connection.startSession();
+
+    try {
+      let createdReturn: PurchaseReturnDocument | null = null;
+
+      await session.withTransaction(async () => {
+        const returnNo = await this.counterService.getNext(
+          'purchase-return',
+          session,
+        );
+
+        const purchaseReturn = new this.purchaseReturnModel({
+          returnNo,
+          supplierId: dto.supplierId,
+          returnDate: dto.returnDate,
+          items: processedItems.map(({ item, conversionFactor, quantityInBase }) => ({
             materialId: item.materialId,
             unitId: item.unitId,
             quantity: item.quantity,
@@ -330,300 +375,70 @@ async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
             conversionFactor,
             unitPrice: item.unitPrice,
             total: item.quantity * item.unitPrice,
-        })),
-        totalAmount,
-        notes: dto.notes,
-        createdBy: user._id,
-    });
+          })),
+          totalAmount,
+          notes: dto.notes,
+          createdBy: user._id,
+        });
 
-    // 🔥 1️⃣ Allocate return to invoices
-    await this.allocateReturnToInvoices(dto.supplierId, totalAmount);
+        await purchaseReturn.save({ session });
 
-    // 🔥 2️⃣ Ledger (CREDIT)
-    await this.ledgerService.createTransaction({
-        supplierId: dto.supplierId,
-        debit: 0,
-        credit: totalAmount,
-        type: 'return',
-        referenceType: 'PurchaseReturn',
-        referenceId: purchaseReturn._id,
-        createdBy: user._id as Types.ObjectId,
-    });
+        await this.allocateReturnToInvoices(
+          dto.supplierId,
+          totalAmount,
+          session,
+        );
 
-    // 🔥 3️⃣ Stock OUT — بالـ quantityInBase
-    for (const { item, quantityInBase } of processedItems) {
-        await this.stockMovementService.create({
-            materialId: new Types.ObjectId(item.materialId),
-            unitId: new Types.ObjectId(item.unitId),
-            type: StockMovementType.RETURN_OUT,
-            quantity: quantityInBase,          // ← المهم هنا
-            unitPrice: item.unitPrice,
+        await this.ledgerService.createTransaction(
+          {
+            supplierId: dto.supplierId,
+            debit: 0,
+            credit: totalAmount,
+            type: 'return',
             referenceType: 'PurchaseReturn',
             referenceId: purchaseReturn._id,
             createdBy: user._id as Types.ObjectId,
-        });
+          },
+          session,
+        );
+
+        for (const { item, quantityInBase } of processedItems) {
+          await this.stockMovementService.create(
+            {
+              materialId: new Types.ObjectId(item.materialId),
+              unitId: new Types.ObjectId(item.unitId),
+              type: StockMovementType.RETURN_OUT,
+              quantity: quantityInBase,
+              unitPrice: item.unitPrice,
+              referenceType: 'PurchaseReturn',
+              referenceId: purchaseReturn._id,
+              createdBy: user._id as Types.ObjectId,
+            },
+            session,
+          );
+        }
+
+        createdReturn = purchaseReturn;
+      });
+
+      if (!createdReturn) {
+        throw new BadRequestException('Failed to create purchase return');
+      }
+
+      return createdReturn;
+    } finally {
+      await session.endSession();
     }
+  }
 
-    return purchaseReturn;
+  async findAllReturns() {
+    return this.purchaseReturnModel
+      .find()
+      .sort({ returnNo: -1 })
+      .populate('supplierId', 'nameAr nameEn code')
+      .populate('createdBy', 'name email')
+      .populate('items.materialId', 'nameAr nameEn code')
+      .populate('items.unitId', 'nameAr nameEn symbol')
+      .exec();
+  }
 }
-
-async findAllReturns() {
-        return this.purchaseReturnModel
-            .find()
-            .sort({ returnNo: -1 })
-            .populate('supplierId', 'nameAr nameEn code')
-            .populate('createdBy', 'name email')
-            .populate('items.materialId', 'nameAr nameEn code')
-            .populate('items.unitId', 'nameAr nameEn symbol')
-            .exec();
-    }
-
-}
-
-// import {
-//     Injectable,
-//     BadRequestException,
-//     NotFoundException,
-// } from '@nestjs/common';
-// import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-// import { Connection, Model, Types } from 'mongoose';
-// import { PurchaseInvoice, PurchaseInvoiceStatus } from 'src/DB/Models/Transaction/purchase-invoice.schema';
-// import { SupplierLedgerService } from '../ledger/supplier-ledger.service';
-// import { CounterService } from '../common/counter.service';
-// import { CreatePurchaseDto } from './dto/create-purchase.dto';
-// import { StockMovement, StockMovementType } from 'src/DB/Models/Transaction/stock-movement.schema';
-// import { TUser } from 'src/DB';
-// import { I18nContext, I18nService } from 'nestjs-i18n';
-// import { CreatePurchaseReturnDto } from './dto/create-purchase-return.dto';
-// import { PurchaseReturn, PurchaseReturnDocument } from 'src/DB/Models/Transaction/purchase-return.schema';
-// import { StockMovementService } from '../stock/stock-movement.service';
-
-// @Injectable()
-// export class PurchaseService {
-//     constructor(
-//         @InjectModel(PurchaseInvoice.name)
-//         private readonly purchaseModel: Model<PurchaseInvoice>,
-
-//         @InjectModel(PurchaseReturn.name)
-//         private readonly purchaseReturnModel: Model<PurchaseReturnDocument>,
-
-//         private readonly ledgerService: SupplierLedgerService,
-//         private readonly stockMovementService: StockMovementService, // ✅
-//         private readonly counterService: CounterService,
-//         private readonly i18n: I18nService,
-//     ) { }
-
-
-// /*************  ✨ Windsurf Command ⭐  *************/
-// /**
-//  * Returns the current language set in the i18n context.
-//  * If no language is set, it returns 'ar' as default.
-//  * @returns {string} The current language set in the i18n context.
-//  */
-// /*******  ef4aacde-26b3-40d5-a442-cef215263d72  *******/    private getLang(): string {
-//         return I18nContext.current()?.lang || 'ar';
-//     }
-
-
-
-
-//     async createPurchase(dto: CreatePurchaseDto, user: TUser) {
-//         const lang = this.getLang();
-
-//         const totalAmount = dto.items.reduce(
-//             (sum, item) => sum + item.quantity * item.unitPrice,
-//             0,
-//         );
-
-//         if (totalAmount <= 0) {
-//             throw new BadRequestException(
-//                 this.i18n.translate('purchase.errors.invalidTotal', { lang }),
-//             );
-//         }
-
-//         const invoiceNo = await this.counterService.getNext('purchase-invoice');
-
-//         const invoiceDate = new Date(dto.invoiceDate);
-//         let dueDate: Date | undefined;
-
-//         if (dto.creditDays && dto.creditDays > 0) {
-//             dueDate = new Date(invoiceDate);
-//             dueDate.setDate(dueDate.getDate() + dto.creditDays);
-//         }
-
-//         const invoice = await this.purchaseModel.create({
-//             invoiceNo,
-//             supplierId: dto.supplierId,
-//             supplierInvoiceNo: dto.supplierInvoiceNo,
-//             invoiceDate,
-//             dueDate,
-//             items: dto.items.map(item => ({
-//                 materialId: item.materialId,
-//                 quantity: item.quantity,
-//                 unitPrice: item.unitPrice,
-//                 total: item.quantity * item.unitPrice,
-//             })),
-//             totalAmount,
-//             paidAmount: 0,
-//             remainingAmount: totalAmount,
-//             status: PurchaseInvoiceStatus.OPEN,
-//             notes: dto.notes,
-//             createdBy: user._id,
-//         });
-
-//         // ✅ Stock IN
-//         for (const item of dto.items) {
-//             await this.stockMovementService.create({
-//                 materialId: item.materialId,
-//                 type: StockMovementType.IN,
-//                 quantity: item.quantity,
-//                 unitPrice: item.unitPrice,
-//                 referenceType: 'PurchaseInvoice',
-//                 referenceId: invoice._id,
-//                 createdBy: user._id as Types.ObjectId,
-//             });
-//         }
-
-//         // ✅ Ledger (DEBIT)
-//         await this.ledgerService.createTransaction({
-//             supplierId: dto.supplierId,
-//             debit: totalAmount,
-//             credit: 0,
-//             type: 'purchase',
-//             referenceType: 'PurchaseInvoice',
-//             referenceId: invoice._id,
-//             createdBy: user._id as Types.ObjectId,
-//         });
-
-//         return invoice;
-//     }
-
-
-//     async findById(id: string) {
-//         if (!Types.ObjectId.isValid(id)) {
-//             const lang = this.getLang();
-//             throw new BadRequestException(
-//                 this.i18n.translate('purchase.errors.invalidId', { lang })
-//             );
-//         }
-
-//         const invoice = await this.purchaseModel
-//             .findById(id)
-//             .populate('supplierId', 'nameAr nameEn code -_id')
-//             .populate('items.materialId', 'nameAr nameEn code ')
-//             .populate('createdBy', 'name email');
-
-//         if (!invoice) {
-//             const lang = this.getLang();
-//             throw new NotFoundException(
-//                 this.i18n.translate('purchase.errors.notFound', { lang })
-//             );
-//         }
-
-//         return invoice;
-//     }
-
-//     async findAll() {
-//         return this.purchaseModel
-//             .find()
-//             .sort({ invoiceDate: -1 })
-//             .populate('supplierId', 'nameAr nameEn code')
-//             .populate('createdBy', 'name');
-//     }
-
-//     async findBySupplier(supplierId: string) {
-//         if (!Types.ObjectId.isValid(supplierId)) {
-//             const lang = this.getLang();
-//             throw new BadRequestException(
-//                 this.i18n.translate('purchase.errors.invalidId', { lang })
-//             );
-//         }
-//         const result = await this.purchaseModel
-//             .find({ supplierId: (supplierId) })
-//             .sort({ invoiceDate: -1 })
-//             .populate('createdBy', 'name');
-
-//         if (result.length === 0) {
-//             const lang = this.getLang();
-//             throw new NotFoundException(
-//                 this.i18n.translate('purchase.errors.noPurchasesFound', { lang })
-//             );
-//         }
-
-//         return result;
-//     }
-
-//     async getOpenInvoices(supplierId: string) {
-//         if (!Types.ObjectId.isValid(supplierId)) {
-//             const lang = this.getLang();
-//             throw new BadRequestException(
-//                 this.i18n.translate('purchase.errors.invalidId', { lang })
-//             );
-//         }
-//         const result = await this.purchaseModel
-//             .find({
-//                 supplierId: (supplierId),
-//                 status: { $in: [PurchaseInvoiceStatus.OPEN, PurchaseInvoiceStatus.PARTIAL] },
-//             })
-//             .sort({ invoiceDate: 1 });
-
-//         if (result.length === 0) {
-//             const lang = this.getLang();
-//             throw new NotFoundException(
-//                 this.i18n.translate('purchase.errors.noOpenInvoices', { lang })
-//             );
-//         }
-
-//         return result;
-//     }
-
-
-//     async createPurchaseReturn(dto: CreatePurchaseReturnDto, user: TUser) {
-//         const items = dto.items.map(i => ({
-//             ...i,
-//             total: i.quantity * i.unitPrice,
-//         }));
-
-//         const totalAmount = items.reduce((s, i) => s + i.total, 0);
-
-//         const returnNo = await this.counterService.getNext('purchase-return');
-
-//         const purchaseReturn = await this.purchaseReturnModel.create({
-//             returnNo,
-//             supplierId: dto.supplierId,
-//             returnDate: dto.returnDate,
-//             items,
-//             totalAmount,
-//             notes: dto.notes,
-//             createdBy: user._id,
-//         });
-
-//         // ✅ Ledger (CREDIT)
-//         await this.ledgerService.createTransaction({
-//             supplierId: dto.supplierId,
-//             debit: 0,
-//             credit: totalAmount,
-//             type: 'return',
-//             referenceType: 'PurchaseReturn',
-//             referenceId: purchaseReturn._id,
-//             createdBy: user._id as Types.ObjectId,
-//         });
-
-//         // ✅ Stock OUT
-//         for (const item of items) {
-//             await this.stockMovementService.create({
-//                 materialId: item.materialId,
-//                 type: StockMovementType.RETURN_OUT,
-//                 quantity: item.quantity,
-//                 unitPrice: item.unitPrice,
-//                 referenceType: 'return',
-//                 referenceId: purchaseReturn._id,
-//                 createdBy: user._id as Types.ObjectId,
-//             });
-//         }
-
-//         return purchaseReturn;
-//     }
-
-
-// }
