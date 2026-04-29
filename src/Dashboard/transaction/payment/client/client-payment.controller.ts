@@ -58,6 +58,21 @@ export class ClientPaymentController {
   }
 
   // =========================
+  // Get Payment Summary By Project
+  // =========================
+  @Auth('admin', 'accountant', 'manager')
+  @Get('summary/:projectId')
+  async getProjectSummary(@Param('projectId') projectId: string) {
+    const lang = this.getLang();
+    const result =
+      await this.clientPaymentService.getProjectPaymentSummary(projectId);
+    return {
+      result,
+      message: this.i18n.translate('clientPayment.fetched', { lang }),
+    };
+  }
+
+  // =========================
   // Get Payment By ID
   // =========================
   @Auth('admin', 'accountant', 'manager')

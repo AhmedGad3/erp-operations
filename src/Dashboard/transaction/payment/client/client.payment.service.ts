@@ -37,14 +37,41 @@ export class ClientPaymentService {
     return I18nContext.current()?.lang || 'ar';
   }
 
-  async createClientPayment(dto: CreateClientPaymentDto, user: TUser) {
-    const lang = this.getLang();
+  private resolvePaymentBreakdown(
+    totalAmount: number,
+    contractRemaining: number,
+    ledgerBalance: number,
+    dto: CreateClientPaymentDto,
+  ) {
+    const hasManualBreakdown =
+      dto.contractPayment !== undefined || dto.additionalPayment !== undefined;
 
-    if (dto.totalAmount !== dto.contractPayment + dto.additionalPayment) {
+    let contractPayment = hasManualBreakdown
+      ? Number(dto.contractPayment || 0)
+      : Math.min(totalAmount, Math.max(contractRemaining, 0));
+
+    let additionalPayment = hasManualBreakdown
+      ? Number(dto.additionalPayment || 0)
+      : Math.max(totalAmount - contractPayment, 0);
+
+    if (hasManualBreakdown && totalAmount !== contractPayment + additionalPayment) {
       throw new BadRequestException(
-        this.i18n.translate('payments.errors.invalidTotal', { lang }),
+        this.i18n.translate('payments.errors.invalidTotal', {
+          lang: this.getLang(),
+        }),
       );
     }
+
+    return {
+      contractPayment,
+      additionalPayment,
+      contractRemaining,
+      ledgerBalance,
+    };
+  }
+
+  async createClientPayment(dto: CreateClientPaymentDto, user: TUser) {
+    const lang = this.getLang();
 
     if (dto.totalAmount <= 0) {
       throw new BadRequestException(
@@ -75,7 +102,15 @@ export class ClientPaymentService {
           session,
         );
 
-        if (dto.contractPayment > contractRemaining) {
+        const { contractPayment, additionalPayment } =
+          this.resolvePaymentBreakdown(
+            dto.totalAmount,
+            contractRemaining,
+            ledgerBalance,
+            dto,
+          );
+
+        if (contractPayment > contractRemaining) {
           throw new BadRequestException(
             this.i18n.translate('payments.errors.exceedsContract', {
               lang,
@@ -84,7 +119,7 @@ export class ClientPaymentService {
           );
         }
 
-        if (contractRemaining > 0 && dto.contractPayment === 0) {
+        if (contractRemaining > 0 && contractPayment === 0) {
           throw new BadRequestException(
             this.i18n.translate('payments.errors.contractMustBePaidFirst', {
               lang,
@@ -92,7 +127,7 @@ export class ClientPaymentService {
           );
         }
 
-        if (ledgerBalance <= 0 && dto.additionalPayment > 0) {
+        if (ledgerBalance <= 0 && additionalPayment > 0) {
           throw new BadRequestException(
             this.i18n.translate('payments.errors.noAdditionalBalance', {
               lang,
@@ -100,7 +135,7 @@ export class ClientPaymentService {
           );
         }
 
-        if (ledgerBalance > 0 && dto.additionalPayment > ledgerBalance) {
+        if (ledgerBalance > 0 && additionalPayment > ledgerBalance) {
           throw new BadRequestException(
             this.i18n.translate('payments.errors.exceedsLedger', {
               lang,
@@ -119,8 +154,8 @@ export class ClientPaymentService {
           clientId: project.clientId,
           projectId: project._id,
           amount: dto.totalAmount,
-          contractPayment: dto.contractPayment,
-          additionalPayment: dto.additionalPayment,
+          contractPayment,
+          additionalPayment,
           method: dto.method,
           transferRef: dto.transferRef,
           chequeNo: dto.chequeNo,
@@ -131,7 +166,7 @@ export class ClientPaymentService {
 
         await payment.save({ session });
 
-        project.totalPaid += dto.contractPayment;
+        project.totalPaid += contractPayment;
         await project.save({ session });
 
         await this.clientLedgerService.createTransaction(

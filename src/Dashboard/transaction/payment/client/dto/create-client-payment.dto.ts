@@ -31,12 +31,14 @@ export class CreateClientPaymentDto {
 
     @IsNumber()
     @Min(0)
-    @IsNotEmpty()
+    @IsOptional()
+    @Transform(({ value }) => (value === '' || value === null || value === undefined ? undefined : Number(value)))
     contractPayment: number;
 
     @IsNumber()
     @Min(0)
-    @IsNotEmpty()
+    @IsOptional()
+    @Transform(({ value }) => (value === '' || value === null || value === undefined ? undefined : Number(value)))
     additionalPayment: number;
 
     @IsEnum(PaymentMethod)
