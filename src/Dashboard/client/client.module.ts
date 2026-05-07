@@ -5,9 +5,10 @@ import { ClientRepository } from '../../DB/Models/Client/client.repository';
 import { ClientService } from './client.service';
 import { ProjectModel } from '../../DB/Models/Project/project.model';
 import { ProjectRepository } from '../../DB/Models/Project/project.repository';
+import { CommonModule } from '../transaction/common/common.module';
 
 @Module({
-  imports: [ClientModel],
+  imports: [ClientModel, CommonModule],
   controllers: [ClientController],
   providers: [ClientRepository, ClientService ],
   

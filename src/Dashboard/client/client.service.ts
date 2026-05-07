@@ -11,20 +11,35 @@ import { CreateClientDto, UpdateClientDto } from './dto';
 import { TUser } from '../../DB';
 import { Types } from 'mongoose';
 import { TClient } from '../../DB/Models/Client/client.schema';
+import { CounterService } from '../transaction/common/counter.service';
 
 
 @Injectable()
 export class ClientService {
   constructor(
     private readonly clientRepository: ClientRepository,
-     private readonly i18n: I18nService
+     private readonly i18n: I18nService,
+     private readonly counterService: CounterService,
   ) {}
  private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private async generateUniqueClientCode(): Promise<string> {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const code = await this.counterService.getNextCode('client-code', 'CLT');
+            const codeExists = await this.clientRepository.findByCode(code);
+            if (!codeExists) return code;
+        }
+
+        throw new ConflictException('Unable to generate a unique client code');
+    }
+
     async createClient (createClientDto: CreateClientDto , user: TUser): Promise<TClient> {
        const lang = this.getLang();
+       const code = createClientDto.code?.trim()
+           ? createClientDto.code.trim().toUpperCase()
+           : await this.generateUniqueClientCode();
       
               const exists = await this.clientRepository.findByName(
                   createClientDto.nameAr,
@@ -35,19 +50,19 @@ export class ClientService {
                       this.i18n.translate('clients.errors.alreadyExists', { lang })
                   );
               }
-  const codeExists = await this.clientRepository.findByCode(createClientDto.code)
+  const codeExists = await this.clientRepository.findByCode(code)
         if (codeExists) {
             throw new ConflictException(
                 this.i18n.translate('clients.errors.codeExists', {
                     lang,
-                    args: { code: createClientDto.code },
+                    args: { code },
                 })
             );
         }
 
          const clientData = {
                     ...createClientDto,
-                    code: createClientDto.code.toUpperCase(),
+                    code,
                     createdBy: user._id as Types.ObjectId,
                 }
        const client = await this.clientRepository.create(clientData);

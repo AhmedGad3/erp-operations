@@ -12,8 +12,8 @@ export class CreateClientDto {
   nameEn: string;
 
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @IsOptional()
   @IsString()

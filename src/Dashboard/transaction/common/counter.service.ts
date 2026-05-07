@@ -20,4 +20,14 @@ export class CounterService {
 
         return counter.seq;
     }
+
+    async getNextCode(
+        name: string,
+        prefix: string,
+        session?: ClientSession,
+        padLength = 6,
+    ): Promise<string> {
+        const seq = await this.getNext(name, session);
+        return `${prefix.toUpperCase()}-${String(seq).padStart(padLength, '0')}`;
+    }
 }
