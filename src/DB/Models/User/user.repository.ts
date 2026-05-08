@@ -13,8 +13,7 @@ export class UserRepository extends DBService<TUser> {
   }
 
   findByEmail(email: string): Promise<TUser | null> {
-    const userData = this.findOne({ email });
-    return userData;
+    return this.userModel.findOne({ email }).select('-password').exec();
   }
 
 
