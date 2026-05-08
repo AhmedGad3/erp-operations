@@ -7,6 +7,7 @@ import { TMaterial } from "../../DB/Models/Material/material.schema";
 import { Types } from "mongoose";
 import { MainCategory } from "../../Common/Enums";
 import { UpdateMaterialDto } from "./dto/update-material.dto";
+import { CounterService } from "../transaction/common/counter.service";
 
 
 
@@ -15,7 +16,8 @@ export class MaterialService {
     constructor(
         private readonly materialRepository: MaterialRepository,
         private readonly unitRepository: UnitRepository,
-        private readonly i18n: I18nService
+        private readonly i18n: I18nService,
+        private readonly counterService: CounterService,
     ) { }
 
 
@@ -23,8 +25,21 @@ export class MaterialService {
         return I18nContext.current()?.lang || 'ar';
     }
 
+   private async generateUniqueMaterialCode(): Promise<string> {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        const code = await this.counterService.getNextCode('material-code', 'MAT');
+        const codeExists = await this.materialRepository.findByCode(code);
+        if (!codeExists) return code;
+    }
+
+    throw new ConflictException('Unable to generate a unique material code');
+}
+
    async createMaterial(createMaterialDto: CreateMaterialDto, user: TUser): Promise<TMaterial> {
     const lang = this.getLang();
+    const code = createMaterialDto.code?.trim()
+        ? createMaterialDto.code.trim().toUpperCase()
+        : await this.generateUniqueMaterialCode();
 
     const exists = await this.materialRepository.findByName(
         createMaterialDto.nameAr,
@@ -36,12 +51,12 @@ export class MaterialService {
         );
     }
 
-    const codeExists = await this.materialRepository.findByCode(createMaterialDto.code)
+    const codeExists = await this.materialRepository.findByCode(code)
     if (codeExists) {
         throw new ConflictException(
             this.i18n.translate('materials.errors.codeExists', {
                 lang,
-                args: { code: createMaterialDto.code },
+                args: { code },
             })
         );
     }
@@ -67,7 +82,7 @@ export class MaterialService {
 
     const materialData: any = {
         ...createMaterialDto,
-        code: createMaterialDto.code.toUpperCase(),
+        code,
         baseUnit: new Types.ObjectId(createMaterialDto.baseUnit),
         ...(createMaterialDto.defaultPurchaseUnit && {
             defaultPurchaseUnit: new Types.ObjectId(createMaterialDto.defaultPurchaseUnit)

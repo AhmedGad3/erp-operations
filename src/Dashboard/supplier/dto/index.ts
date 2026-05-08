@@ -13,9 +13,9 @@ export class CreateSupplierDto {
     nameEn: string;
 
     @IsString()
-    @IsNotEmpty()
     @MaxLength(20)
-    code: string;
+    @IsOptional()
+    code?: string;
 
     @IsString()
     @IsOptional()

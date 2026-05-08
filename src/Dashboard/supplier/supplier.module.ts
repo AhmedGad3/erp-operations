@@ -4,9 +4,11 @@ import { Supplier, SupplierRepository, SupplierSchema } from "../../DB";
 import { SupplierTransaction, SupplierTransactionSchema } from "../../DB/Models/Transaction/supplier/supplier-transaction.schema";
 import { SupplierService } from "./supplier.service";
 import { SupplierController } from "./supplier.controller";
+import { CommonModule } from "../transaction/common/common.module";
 
 @Module({
     imports: [
+        CommonModule,
         MongooseModule.forFeature([
             { name: Supplier.name, schema: SupplierSchema },
             { name: SupplierTransaction.name, schema: SupplierTransactionSchema },

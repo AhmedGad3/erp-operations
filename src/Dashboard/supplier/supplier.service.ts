@@ -4,34 +4,49 @@ import { SupplierRepository } from "../../DB/Models/Supplier/supplier.repository
 import { TUser } from "../../DB";
 import { CreateSupplierDto, UpdateSupplierDto } from "./dto";
 import { I18nService, I18nContext } from "nestjs-i18n";
+import { CounterService } from "../transaction/common/counter.service";
 
 @Injectable()
 export class SupplierService {
     constructor(
         private readonly supplierRepository: SupplierRepository,
-        private readonly i18n: I18nService
+        private readonly i18n: I18nService,
+        private readonly counterService: CounterService,
     ) { }
 
     private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private async generateUniqueSupplierCode(): Promise<string> {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const code = await this.counterService.getNextCode('supplier-code', 'SUP');
+            const codeExists = await this.supplierRepository.findByCode(code);
+            if (!codeExists) return code;
+        }
+
+        throw new ConflictException('Unable to generate a unique supplier code');
+    }
+
     async createSupplier(dto: CreateSupplierDto, user: TUser) {
         const lang = this.getLang();
+        const code = dto.code?.trim()
+            ? dto.code.trim().toUpperCase()
+            : await this.generateUniqueSupplierCode();
 
         const exists = await this.supplierRepository.findByName(dto.nameAr, dto.nameEn);
         if (exists) {
             throw new ConflictException(this.i18n.translate('suppliers.errors.alreadyExists', { lang }));
         }
 
-        const codeExists = await this.supplierRepository.findByCode(dto.code);
+        const codeExists = await this.supplierRepository.findByCode(code);
         if (codeExists) {
-            throw new ConflictException(this.i18n.translate('suppliers.errors.codeExists', { lang, args: { code: dto.code } }));
+            throw new ConflictException(this.i18n.translate('suppliers.errors.codeExists', { lang, args: { code } }));
         }
 
         const supplierData: any = {
             ...dto,
-            code: dto.code.toUpperCase(),
+            code,
             createdBy: user._id as Types.ObjectId,
         };
 

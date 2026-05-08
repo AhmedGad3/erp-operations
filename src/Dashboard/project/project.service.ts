@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { ClientRepository } from "../../DB/Models/Client/client.repository";
 import { ProjectRepository } from "../../DB/Models/Project/project.repository";
@@ -7,6 +7,7 @@ import { TUser } from "../../DB";
 import { Model, Types } from "mongoose";
 import { Project, ProjectStatus, TProject } from "../../DB/Models/Project/project.schema";
 import { InjectModel } from "@nestjs/mongoose";
+import { CounterService } from "../transaction/common/counter.service";
 
 @Injectable()
 export class ProjectService {
@@ -15,15 +16,29 @@ export class ProjectService {
         private projectModel: Model<TProject>,
         private readonly projectRepository: ProjectRepository,
         private readonly clientRepository: ClientRepository,
-        private readonly i18n: I18nService
+        private readonly i18n: I18nService,
+        private readonly counterService: CounterService,
     ){}
 
     private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
     }
 
+    private async generateUniqueProjectCode(): Promise<string> {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const code = await this.counterService.getNextCode('project-code', 'PRJ');
+            const codeExists = await this.projectRepository.findByCode(code);
+            if (!codeExists) return code;
+        }
+
+        throw new ConflictException('Unable to generate a unique project code');
+    }
+
     async createProject(createDto: CreateProjectDto, user: TUser) {
         const lang = this.getLang();
+        const code = createDto.code?.trim()
+            ? createDto.code.trim().toUpperCase()
+            : await this.generateUniqueProjectCode();
 
         const client = await this.clientRepository.findById(createDto.clientId);
         if (!client || !client.isActive) {
@@ -32,19 +47,19 @@ export class ProjectService {
             );
         }
 
-        const codeExists = await this.projectRepository.findByCode(createDto.code);
+        const codeExists = await this.projectRepository.findByCode(code);
         if (codeExists) {
             throw new BadRequestException(
                 this.i18n.translate('projects.errors.codeExists', {
                     lang,
-                    args: { code: createDto.code },
+                    args: { code },
                 }),
             );
         }
 
         const project = await this.projectRepository.create({
             ...createDto,
-            code: createDto.code.toUpperCase(),
+            code,
             clientId: new Types.ObjectId(createDto.clientId),
             startDate: new Date(createDto.startDate),
             expectedEndDate: createDto.expectedEndDate

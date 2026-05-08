@@ -14,9 +14,9 @@ export class CreateAssetDto {
     nameEn: string;
 
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @MaxLength(50)
-    code: string;
+    code?: string;
 
     @IsString()
     @IsNotEmpty()

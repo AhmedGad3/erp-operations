@@ -9,6 +9,7 @@ import { UnitCategory } from "../../Common/Enums";
 import { I18nContext, I18nService } from "nestjs-i18n";
 import { UnitModel } from '../../DB/Models/Unit/unit.model';
 import { InjectModel } from "@nestjs/mongoose";
+import { CounterService } from "../transaction/common/counter.service";
 
 
 
@@ -19,6 +20,7 @@ export class UnitService {
         private readonly unitRepository: UnitRepository,
         
         private readonly i18n: I18nService,
+        private readonly counterService: CounterService,
          @InjectModel(Unit.name) private readonly unitModel: Model<TUnit>
     ){}
 
@@ -26,8 +28,21 @@ export class UnitService {
     return I18nContext.current()?.lang || 'ar';
   }
 
+  private async generateUniqueUnitCode(): Promise<string> {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const code = await this.counterService.getNextCode('unit-code', 'UNT');
+      const codeExists = await this.unitRepository.findByCode(code);
+      if (!codeExists) return code;
+    }
+
+    throw new ConflictException('Unable to generate a unique unit code');
+  }
+
   async createUnit(createUnitDto: CreateUnitDto, user: TUser): Promise<TUnit> {
   const lang = this.getLang();
+  const code = createUnitDto.code?.trim()
+    ? createUnitDto.code.trim().toUpperCase()
+    : await this.generateUniqueUnitCode();
 
   const exists = await this.unitRepository.findByName(
     createUnitDto.nameAr,
@@ -39,12 +54,12 @@ export class UnitService {
     );
   }
 
-  const codeExists = await this.unitRepository.findByCode(createUnitDto.code);
+  const codeExists = await this.unitRepository.findByCode(code);
   if (codeExists) {
     throw new ConflictException(
       this.i18n.translate('units.errors.codeExists', {
         lang,
-        args: { code: createUnitDto.code },
+        args: { code },
       })
     );
   }
@@ -110,6 +125,7 @@ export class UnitService {
 
   const unitData: any  = {
     ...createUnitDto,
+    code,
     createdBy: user._id as Types.ObjectId,
   };
 

@@ -26,13 +26,13 @@ export class CreateProjectDto {
     nameEn: string;
 
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @Transform(({ value }) => value?.toUpperCase().trim())
     @Length(3, 20)
     @Matches(/^[A-Z0-9-]+$/, {
         message: 'Code must contain only uppercase letters, numbers, and hyphens',
     })
-    code: string;
+    code?: string;
 
     @IsMongoId()
     @IsNotEmpty()

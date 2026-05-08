@@ -15,9 +15,9 @@ export class CreateUnitDto {
   nameEn: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @Transform(({ value }) => value?.toUpperCase().trim())
-  code: string;
+  code?: string;
 
   @IsString()
   @IsOptional()

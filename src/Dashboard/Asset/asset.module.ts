@@ -3,9 +3,10 @@ import { AssetModel } from '../../DB/Models/Asset/asset.model';
 import { AssetRepository } from '../../DB/Models/Asset/asset.repository';
 import { AssetController } from './asset.controller';
 import { AssetService } from './asset.service';
+import { CommonModule } from '../transaction/common/common.module';
 
 @Module({
-    imports: [AssetModel],
+    imports: [AssetModel, CommonModule],
     controllers: [AssetController],
     providers: [AssetRepository, AssetService],
     exports: [AssetRepository, ],

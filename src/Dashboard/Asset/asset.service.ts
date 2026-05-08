@@ -11,16 +11,28 @@ import { TAsset, AssetStatus } from '../../DB/Models/Asset/asset.schema';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { TUser } from '../../DB';
+import { CounterService } from '../transaction/common/counter.service';
 
 @Injectable()
 export class AssetService {
     constructor(
         private readonly assetRepository: AssetRepository,
         private readonly i18n: I18nService,
+        private readonly counterService: CounterService,
     ) {}
 
     private getLang(): string {
         return I18nContext.current()?.lang || 'ar';
+    }
+
+    private async generateUniqueAssetCode(): Promise<string> {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const code = await this.counterService.getNextCode('asset-code', 'AST');
+            const codeExists = await this.assetRepository.findByCode(code);
+            if (!codeExists) return code;
+        }
+
+        throw new ConflictException('Unable to generate a unique asset code');
     }
 
     // ✅ Create Asset
@@ -29,23 +41,26 @@ export class AssetService {
         user: TUser,
     ): Promise<TAsset> {
         const lang = this.getLang();
+        const code = createAssetDto.code?.trim()
+            ? createAssetDto.code.trim().toUpperCase()
+            : await this.generateUniqueAssetCode();
 
         // Check if code already exists
         const codeExists = await this.assetRepository.findByCode(
-            createAssetDto.code,
+            code,
         );
         if (codeExists) {
             throw new ConflictException(
                 this.i18n.translate('assets.errors.codeExists', {
                     lang,
-                    args: { code: createAssetDto.code },
+                    args: { code },
                 }),
             );
         }
 
         const assetData = {
             ...createAssetDto,
-            code: createAssetDto.code.toUpperCase(),
+            code,
             createdBy: user._id as Types.ObjectId,
         };
 

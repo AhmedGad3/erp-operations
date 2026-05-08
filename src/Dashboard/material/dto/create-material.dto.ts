@@ -22,13 +22,13 @@ export class CreateMaterialDto {
     subCategory?: string;
 
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @Transform(({ value }) => value?.toUpperCase().trim())
     @Length(3, 20)
     @Matches(/^[A-Z0-9-]+$/, {
         message: 'Code must contain only uppercase letters, numbers, and hyphens'
     })
-    code: string;
+    code?: string;
 
     @IsEnum(MainCategory)
     @Transform(({ value }) => value?.trim())

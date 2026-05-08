@@ -1,4 +1,4 @@
-import { DbOptions } from 'mongodb';
+import { DbOptions } from 'mongodb'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import {
   ClientSession,
   FilterQuery,
@@ -85,7 +85,6 @@ export abstract class DBService<T> {
   ): Promise<T | null> {
     return await this.model
       .findByIdAndUpdate(id, update, { new: true, ...options })
+      .exec();
   }
-
-  // updateOne():Promise<T>{}
 }
