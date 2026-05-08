@@ -10,10 +10,10 @@ import { CreateProjectEquipmentDto } from './dto/create-project-equipment.dto';
 import { UpdateProjectEquipmentDto } from './dto/update-project-equipment.dto';
 import { TUser } from '../../DB';
 import { ProjectRepository } from '../../DB/Models/Project/project.repository';
-import { ProjectEquipmentRepository } from 'src/DB/Models/Project-Equipment/project-equipment.repository';
-import { AssetRepository } from 'src/DB/Models/Asset/asset.repository';
-import { TProjectEquipment, EquipmentSource } from 'src/DB/Models/Project-Equipment/project-equipment.schema';
-import { ProjectStatus } from 'src/DB/Models/Project/project.schema';
+import { ProjectEquipmentRepository } from '../../DB/Models/Project-Equipment/project-equipment.repository';
+import { AssetRepository } from '../../DB/Models/Asset/asset.repository';
+import { TProjectEquipment, EquipmentSource } from '../../DB/Models/Project-Equipment/project-equipment.schema';
+import { ProjectStatus } from '../../DB/Models/Project/project.schema';
 
 @Injectable()
 export class ProjectEquipmentService {

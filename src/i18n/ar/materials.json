@@ -18,6 +18,7 @@
     "baseUnitNotFound": "الوحدة الأساسية غير موجودة",
     "unitNotFound": "الوحدة غير موجودة",
     "invalidMainCategory": "التصنيف الرئيسي غير صالح",
+    "invalidSubCategory": "التصنيف الفرعي غير صالح.",
     "multipleDefaultPurchase": "لا يمكن تعيين أكثر من وحدة افتراضية للشراء",
     "multipleDefaultIssue": "لا يمكن تعيين أكثر من وحدة افتراضية للصرف",
     "alreadyDeleted": "المستلزم محذوف بالفعل",

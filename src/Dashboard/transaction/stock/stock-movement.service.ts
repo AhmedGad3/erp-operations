@@ -129,59 +129,65 @@ async createAdjustments(
         createdBy: Types.ObjectId;
     }
 ) {
+    const session = await this.stockModel.db.startSession();
 
-    const results: HydratedDocument<StockMovement>[] = [];
-    for (const item of data.adjustments) {
-        const material = await this.materialRepository.findById(item.materialId);
-        if (!material) {
-            throw new BadRequestException(`Material not found: ${item.materialId}`);
-        }
+    try {
+        const results: HydratedDocument<StockMovement>[] = [];
 
-        let conversionFactor = 1;
-        if (item.unitId.toString() !== material.baseUnit.toString()) {
-            const altUnit = material.alternativeUnits?.find(
-                u => u.unitId.toString() === item.unitId.toString()
-            );
+        await session.withTransaction(async () => {
+            for (const item of data.adjustments) {
+                const material = await this.materialRepository.findById(item.materialId);
+                if (!material) {
+                    throw new BadRequestException(`Material not found: ${item.materialId}`);
+                }
 
-            if (!altUnit) {
-                throw new BadRequestException(
-                    `Invalid unit for material: ${material.nameAr} | ${material.nameEn}`
-                );
+                let conversionFactor = 1;
+                if (item.unitId.toString() !== material.baseUnit.toString()) {
+                    const altUnit = material.alternativeUnits?.find(
+                        u => u.unitId.toString() === item.unitId.toString()
+                    );
+
+                    if (!altUnit) {
+                        throw new BadRequestException(
+                            `Invalid unit for material: ${material.nameAr} | ${material.nameEn}`
+                        );
+                    }
+
+                    conversionFactor = altUnit.conversionFactor;
+                }
+
+                const actualQuantityInBaseUnit = item.actualQuantity * conversionFactor;
+                const currentStock = material.currentStock ?? 0;
+                const difference = actualQuantityInBaseUnit - currentStock;
+
+                if (difference === 0) return;
+
+                const adjustmentType =
+                    difference > 0
+                        ? StockMovementType.ADJUSTMENT_IN
+                        : StockMovementType.ADJUSTMENT_OUT;
+
+                const adjustmentQuantity = Math.abs(difference);
+
+                const adjustment = await this.create({
+                    materialId: material._id,
+                    unitId: material.baseUnit,
+                    type: adjustmentType,
+                    quantity: adjustmentQuantity,
+                    referenceType: 'StockAdjustment',
+                    referenceId: new Types.ObjectId(),
+                    notes: `Adjustment: ${item.reason}`,
+                    createdBy: data.createdBy,
+                }, session);
+
+                results.push(adjustment);
             }
+        });
 
-            conversionFactor = altUnit.conversionFactor;
-        }
-
-        const actualQuantityInBaseUnit = item.actualQuantity * conversionFactor;
-        const currentStock = material.currentStock ?? 0;
-
-        const difference = actualQuantityInBaseUnit - currentStock;
-
-        if (difference === 0) continue; // ⬅️ مهم: نعدي اللي مفيهوش فرق
-
-        const adjustmentType =
-            difference > 0
-                ? StockMovementType.ADJUSTMENT_IN
-                : StockMovementType.ADJUSTMENT_OUT;
-
-        const adjustmentQuantity = Math.abs(difference);
-
-
-const adjustment = await this.create({
-    materialId: material._id,
-    unitId: material.baseUnit,
-    type: adjustmentType,
-    quantity: adjustmentQuantity,
-    referenceType: 'StockAdjustment',
-    referenceId: new Types.ObjectId(),
-    notes: `Adjustment: ${item.reason}`,
-    createdBy: data.createdBy,
-}, undefined);
-
-results.push(adjustment);
+        return results;
+    } finally {
+        await session.endSession();
     }
-
-    return results;
 }
 
 async getStockMovements() {

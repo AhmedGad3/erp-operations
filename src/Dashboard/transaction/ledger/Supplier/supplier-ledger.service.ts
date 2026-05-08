@@ -37,11 +37,13 @@ export class SupplierLedgerService {
             throw new BadRequestException('Debit/Credit cannot be negative');
         }
 
-        if (data.debit === 0 && data.credit === 0) {
+        const effectiveCredit = data.credit + (data.discountAmount ?? 0);
+
+        if (data.debit === 0 && effectiveCredit === 0) {
             throw new BadRequestException('Debit or Credit must have a value');
         }
 
-        if (data.debit > 0 && data.credit > 0) {
+        if (data.debit > 0 && effectiveCredit > 0) {
             throw new BadRequestException('Only one of Debit or Credit is allowed');
         }
         // Get last balance

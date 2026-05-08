@@ -9,9 +9,9 @@ import { I18nContext, I18nService } from 'nestjs-i18n';
 import { TUser } from '../../DB';
 import { AssetRepository } from '../../DB/Models/Asset/asset.repository';
 import { CounterService } from '../transaction/common/counter.service';
-import { AssetInvoiceRepository } from 'src/DB/Models/AssetInvoice/Asset-Invoice.repository';
+import { AssetInvoiceRepository } from '../../DB/Models/AssetInvoice/Asset-Invoice.repository';
 import { CreateAssetInvoiceDto } from './dto';
-import { TAssetInvoice } from 'src/DB/Models/AssetInvoice/Asset-Invoice.schema';
+import { TAssetInvoice } from '../../DB/Models/AssetInvoice/Asset-Invoice.schema';
 
 @Injectable()
 export class AssetInvoiceService {
