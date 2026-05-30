@@ -14,11 +14,6 @@ export class UpdateAssetDto {
 
     @IsString()
     @IsOptional()
-    @MaxLength(50)
-    code?: string;
-
-    @IsString()
-    @IsOptional()
     @MaxLength(100)
     assetTypeAr?: string;
 

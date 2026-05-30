@@ -134,29 +134,8 @@ export class AssetService {
             );
         }
 
-        // Check if new code conflicts with another asset
-        if (updateAssetDto.code && updateAssetDto.code !== asset.code) {
-            const duplicate = await this.assetRepository.findOne({
-                _id: { $ne: new Types.ObjectId(id) },
-                code: updateAssetDto.code.toUpperCase(),
-            });
-
-            if (duplicate) {
-                throw new ConflictException(
-                    this.i18n.translate('assets.errors.codeExists', {
-                        lang,
-                        args: { code: updateAssetDto.code },
-                    }),
-                );
-            }
-        }
-
         Object.assign(asset, updateAssetDto);
         asset.updatedBy = user._id as Types.ObjectId;
-
-        if (updateAssetDto.code) {
-            asset.code = updateAssetDto.code.toUpperCase();
-        }
 
         return asset.save();
     }
